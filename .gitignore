@@ -1,0 +1,6 @@
+.env
+*pdf
+graphs/*
+__pycache__
+.venv
+save/*
