@@ -101,7 +101,7 @@ class GaiaPDFGenerator:
         story.append(Paragraph("2. Model Ról", self.styles['h1']))
         for r in self.data.get('roles', []):
             data = [
-                [Paragraph(f"Role Schema: <b>{r['name']}</b>", self.styles['th']), ""],
+                [Paragraph(f"Role: <b>{r['name']}</b>", self.styles['th']), ""],
                 ["Description", Paragraph(r['description'], self.styles['td'])],
                 ["Responsibilities", Paragraph(r['responsibilities'], self.styles['td'])],
                 ["Permissions", Paragraph(r['permissions'], self.styles['td_code'])],
@@ -115,16 +115,17 @@ class GaiaPDFGenerator:
         # 3. Interakcje (Rozdzielone IN/OUT i Processing)
         story.append(PageBreak())
         story.append(Paragraph("3. Model Interakcji", self.styles['h1']))
-        headers = ["Goal", "Initiator", "Responder", "Inputs", "Outputs", "Description"]
+        headers = ["Goal", "Name","Initiator", "Responder", "Inputs", "Outputs", "Description"]
         rows = [[Paragraph(h, self.styles['th']) for h in headers]]
         for i in self.data.get('interactions', []):
             rows.append([
                 Paragraph(i['goal'], self.styles['td']),
+                Paragraph(i['protocol_name'], self.styles['td']),
                 Paragraph(i['initiator'], self.styles['td']),
                 Paragraph(i['responder'], self.styles['td']),
-                Paragraph(", ".join(i['in']), self.styles['td_code']),
-                Paragraph(", ".join(i['out']), self.styles['td_code']),
-                Paragraph(i['desc'], self.styles['td'])
+                Paragraph(", ".join(i['in']), self.styles['td']),
+                Paragraph(", ".join(i['out']), self.styles['td']),
+                Paragraph(i['description'], self.styles['td'])
             ])
         story.append(self._create_table(rows, [3*cm, 2.5*cm, 2.5*cm, 3*cm, 3*cm, 5*cm]))
 
@@ -187,11 +188,13 @@ def process_documentation(state: State, config: RunnableConfig = None):
     for i in state['interactions'].interactions:
         interactions_mapped.append({
             "goal": i.goal, 
+            "protocol_name": i.protocol_name,
             "initiator": i.initiator, 
             "responder": i.responder,
             "in": i.inputs, 
             "out": i.outputs,
-            "desc": i.processing_description
+            "description": i.description
+            
         })
 
     services_mapped = []
@@ -247,3 +250,10 @@ def map_to_implementation(state: State):
     7. Acquaintances:\n
     {state.get("acquaintance_model").model_dump_json()}\n
     """
+
+    print("\n"*5)
+    print("==================== GENERATED DOCUMENTATION ====================")
+    print(documetation)
+    print("\n"*5)
+    
+    return documetation

@@ -30,6 +30,7 @@ Zwróć model agentów zawierający listę typów agentów. Dla każdego typu ag
 - Każda rola z fazy analizy musi być przypisana do dokładnie jednego typu agenta
 - Nazwy typów agentów muszą być spójne z domeną systemu
 - Kwalifikatory instancji muszą być realistyczne względem wymagań
+- Jeśli dostałeś feedback od krytyka, uwzględnij go w projekcie i popraw model zgodnie z sugestiami. Liczy się tylko twoja ostatnia odpowiedź. Artefakty z poprzednich odpowiedzi są zatracone, więc musisz w pełni uwzględnić wszelkie poprawki w swojej ostatecznej odpowiedzi.
 """
 
 DEFAULT_CRITIC_AGENTS_PROMPT = """
@@ -55,9 +56,6 @@ Otrzymasz kontekst systemu oraz wygenerowany Model Agentów. Oceń go pod kątem
 ## 4. Zgodność z zasadami GAIA
 - Czy model agentów jest spójny z modelem interakcji (tzn. agenci komunikujący się intensywnie powinni być dobrze rozdzieleni)?
 
-# FORMAT ODPOWIEDZI
-- `is_complete`: true jeśli model jest poprawny i kompletny, false jeśli wymaga poprawek
-- `message`: jeśli is_complete=false, podaj KONKRETNE zarzuty i SUGESTIE poprawy. Jeśli is_complete=true, krótkie potwierdzenie.
 """
 
 DEFAULT_SERVICE_PROMPT = """
@@ -101,6 +99,7 @@ Zwróć model usług: listę agentów, a dla każdego agenta listę jego usług.
 - Każdy protokół i aktywność z modelu ról musi mieć odpowiadającą usługę
 - Warunki wstępne i końcowe muszą być spójne z regułami safety z modelu ról
 - Nazwy usług muszą być jednoznaczne w obrębie całego systemu
+- Jeśli dostałeś feedback od krytyka, uwzględnij go w projekcie i popraw model zgodnie z sugestiami. Liczy się tylko twoja ostatnia odpowiedź. Artefakty z poprzednich odpowiedzi są zatracone, więc musisz w pełni uwzględnić wszelkie poprawki w swojej ostatecznej odpowiedzi.
 """
 
 DEFAULT_CRITIC_SERVICE_PROMPT = """
@@ -128,9 +127,6 @@ Otrzymasz kontekst systemu, model agentów oraz wygenerowany Model Usług. Oceń
 - Czy usługi są przypisane do agentów realizujących odpowiednie role?
 - Czy nie ma usług przypisanych do agenta bez odpowiedniej roli?
 
-# FORMAT ODPOWIEDZI
-- `is_complete`: true jeśli model jest poprawny i kompletny, false jeśli wymaga poprawek
-- `message`: jeśli is_complete=false, podaj KONKRETNE błędy z odniesieniem do konkretnych usług/agentów i SUGESTIE naprawy. Jeśli is_complete=true, krótkie potwierdzenie.
 """
 
 DEFAULT_ACQUAINTANCES_PROMPT = """
@@ -170,6 +166,7 @@ Zwróć model znajomości zawierający:
 # OGRANICZENIA
 - Każda relacja musi być uzasadniona konkretnym protokołem z modelu interakcji lub usług
 - Agenci nierozmawjający bezpośrednio nie powinni mieć krawędzi między sobą
+- Jeśli dostałeś feedback od krytyka, uwzględnij go w projekcie i popraw model zgodnie z sugestiami. Liczy się tylko twoja ostatnia odpowiedź. Artefakty z poprzednich odpowiedzi są zatracone, więc musisz w pełni uwzględnić wszelkie poprawki w swojej ostatecznej odpowiedzi.
 """
 
 DEFAULT_CRITIC_ACQUAINTANCES_PROMPT = """
@@ -199,8 +196,5 @@ Otrzymasz kontekst systemu, model agentów, model usług oraz wygenerowany Model
 ## 5. Spójność z modelem agentów i usług
 - Czy typy agentów w modelu znajomości są spójne z modelem agentów?
 - Czy relacje komunikacyjne odpowiadają usługom zdefiniowanym w modelu usług?
-
-# FORMAT ODPOWIEDZI
-- `is_complete`: true jeśli model jest poprawny i kompletny, false jeśli wymaga poprawek
-- `message`: jeśli is_complete=false, podaj KONKRETNE błędy (brakujące/nadmiarowe krawędzie, błędne kierunki) i SUGESTIE naprawy. Jeśli is_complete=true, krótkie potwierdzenie wraz z oceną luźności powiązań.
+- Czy nie brakuje relacji wynikających z dostępu do danych (permissions) z modelu ról? Jeśli agent A ma permission "reads" do danych produkowanych przez agenta B, powinien istnieć przynajmniej jeden protokół/usługa uzasadniająca krawędź A → B.
 """

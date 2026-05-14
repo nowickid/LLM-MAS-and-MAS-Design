@@ -13,7 +13,7 @@ BG_PID_FILE = "background_pids.txt"
 logger = logging.getLogger(__name__)
 
 @tool(args_schema=ReportStructure)
-def send_report(report):
+def send_report(report: str):
     """Sends a comprehensive report of actions taken during the iteration."""
     logger.info("       Sending report: %s", report)
     return "Report sent successfully"

@@ -2,31 +2,31 @@ from typing import TypedDict, Annotated, Optional
 from langchain_core.messages import BaseMessage
 from langgraph.graph import add_messages
 from operator import add
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List
 
 # Zidentyfikowane role (prototypy)
 class RolePrototype(BaseModel):
     """Wstępny prototyp roli - tylko nazwa i krótki opis."""
-    name: str = Field(description="Nazwa roli (PascalCase)")
-    description: str = Field(description="Krótki opis celu istnienia roli w systemie")
- 
+    name: str = Field(description="Nazwa roli (PascalCase, język angielski)")
+    description: str = Field(description="""
+        Rozbudowany opis celu istnienia roli. Z tego opisu muszą bezpośrednio wynikać akcje wewnętrzne i komunikacja z innymi rolami.
+        """)
  
 class IdentifiedRoles(BaseModel):
     """Zidentyfikowane prototypy ról."""
     roles: List[RolePrototype]
  
  
-# Model interakcji (między rolami)
+# protocol_name description
 class RoleInteraction(BaseModel):
-    """Pojedyncza interakcja między dwiema rolami."""
-    goal: str = Field(description="Cel interakcji (PascalCase)")
+    goal: str = Field(description="Cel biznesowy interakcji (PascalCase, ang.)")
+    protocol_name: str = Field(description="Nazwa protokołu (PascalCase, ang., np. 'RequestDataProcessing', 'NotifyStateChange').")
+    description: str = Field(description="Krótki opis tej komunikacji i zjawiska, które ją wyzwala.")
     initiator: str = Field(description="Nazwa roli inicjującej")
     responder: str = Field(description="Nazwa roli odpowiadającej")
-    inputs: List[str] = Field(description="Dane wnoszone przez inicjatora")
-    outputs: List[str] = Field(description="Dane zwracane przez respondera")
-    processing_description: str = Field(description="Opis przetwarzania") 
- 
+    inputs: List[str] = Field(description="Obiekty danych (Rzeczowniki, PascalCase, np. 'EntityProfile', 'TransactionRecord') wnoszone przez inicjatora. ZAKAZ używania czasowników!")
+    outputs: List[str] = Field(description="Obiekty danych (Rzeczowniki, PascalCase) zwracane przez respondera. ZAKAZ używania czasowników!") 
  
 class InteractionModel(BaseModel):
     """Model interakcji między rolami."""
@@ -36,43 +36,32 @@ class Prototypes(BaseModel):
     """Zidentyfikowane prototypy ról i interakcji."""
     roles: IdentifiedRoles
     interactions: InteractionModel
-# prototypy
-# class Prototypes(BaseModel):
-#     """Zidentyfikowane prototypy ról i interakcji."""
-#     roles: IdentifiedRoles
-#     interactions: InteractionModel
-    
-# Model ról (pełny)
+
 class Permissions(BaseModel):
-    """Uprawnienia do zasobów informacyjnych dla danej roli."""
     read: List[str] = Field(default_factory=list,
-        description="Lista zasobów do odczytu")
+        description="Nazwy obiektów DANYCH (Rzeczowniki, np. 'Document', 'StateInfo'). ZAKAZ wpisywania nazw aktywności/protokołów!")
     write: List[str] = Field(default_factory=list,
-        description="Lista zasobów do zapisu/modyfikacji")
+        description="Nazwy obiektów DANYCH modyfikowanych przez rolę. ZAKAZ wpisywania procesów!")
     consume: List[str] = Field(default_factory=list,
-        description="Lista zasobów do skonsumowania (usunięcia)")
+        description="Obiekty danych trwale usuwane/konsumowane przez rolę.")
     produce: List[str] = Field(default_factory=list,
-        description="Lista zasobów wytwarzanych przez rolę")
- 
+        description="Nowe obiekty danych tworzone przez rolę.")
  
 class Responsibilities(BaseModel):
-    """Odpowiedzialności roli (Liveness i Safety)."""
     liveness: str = Field(
-        description="Wyrażenie regularne cyklu życia roli,")
+        description="Logiczny, CHRONOLOGICZNY ciąg życia roli (np. Inicjalizacja -> Przetwarzanie -> Potwierdzenie). Używaj wyłącznie elementów z list 'activities' i 'protocols'.")
     safety: List[str] = Field(default_factory=list,
-        description="Lista niezmienników, np. ['saldo > 0']")
- 
+        description="Zasady niezmienniczości i stany brzegowe (np. ['EntityStatus == Active', 'QueueSize <= MaxLimit']). ZAKAZ stosowania wyłącznie trywialnych warunków 'UniqueID != Null'.")
  
 class GaiaRole(BaseModel):
     """Kompletna definicja roli - permissions, responsibilities, protocols."""
     name: str = Field(description="Nazwa roli (PascalCase) - musi odpowiadać prototypowi")
     description: str = Field(description="Opis roli spójny z prototypem")
-    activities: List[str] = Field(description="Działania które agent może wykonać bez interakcji z inną rolą")
-    protocols: List[str] = Field(description="Interakcji z innymi rolami")
+    activities: List[str] = Field(description="Wewnętrzne działania obliczeniowe/procesy roli BEZ KOMUNIKACJI (PascalCase, ang.). ZAKAZ używania nazw zdefiniowanych jako protokoły!")
+    protocols: List[str] = Field(description="Ścisłe powiązanie z Modelami Interakcji. Lista musi zawierać protokoły zadeklarowane w polu 'protocol_name' (np. dodając prefiksy jak Request/Respond).")
     permissions: Permissions
     responsibilities: Responsibilities
- 
- 
+     
 class DefineRoles(BaseModel):
     """Pełny model ról GAIA."""
     roles: List[GaiaRole]
@@ -80,19 +69,35 @@ class DefineRoles(BaseModel):
 
 
 # Wspólne
+class Issue(BaseModel):
+    criterion: str = Field(description="Które kryterium GAIA zostało złamane (SŁOWNIE)")
+    description: str = Field(description="Szczegółowy opis tego, co jest źle")
+    fix: str = Field(description="Konkretna wskazówka jak to naprawić")
+    need_to_fix: bool = Field(
+        description="Czy ten problem musi być naprawiony, aby artefakt mógł być uznany za kompletny? (true/false)"
+    )
 class AnalysisFeedback(BaseModel):
+    issues: List[Issue] = Field(
+        default_factory=list,
+        description="Jeśli is_complete = false, dodaj tutaj każdy znaleziony błąd. Zostaw pustą listę, jeśli is_complete = true."
+    )
     is_complete: bool = Field(
-        description="Czy artefakt jest kompletny i spełnia wymagania metodyki GAIA?")
-    message: str = Field(
-        default="",
-        description="ZOSTAW PUSTĘ JEŚLI IS_COMPLETE = TRUE. Jeśli is_complete = false, podaj konkretne wskazówki co jest nie tak i co należy poprawić.")
-    
+        description="Czy artefakt jest kompletny i spełnia wymagania metodyki GAIA?"
+    )
 
-class OptimalizationFeedback(BaseModel):
+class OptimizationFeedback(BaseModel):
+    specific_issue: str = Field(
+        description="Krok 1: Zdefiniuj konkretny błąd w kontekście obecnego zadania (Co poszło nie tak?)."
+    )
+    abstract_rule: str = Field(
+        description="Krok 2: GENERALIZACJA. Przetłumacz `specific_issue` na uniwersalną zasadę. NIE UŻYWAJ słów kluczowych z obecnego zadania (np. zamiast 'psy/karaluchy' użyj 'aktorzy/obiekty domenowe')."
+    )
     new_system_prompt: str = Field(
-        description="Zoptymalizowany prompt do wygenerowania lepszego artefaktu.")
-    explenations: str = Field(
-        description="Wyjaśnienie, dlaczego ten prompt jest lepszy i jakie zmiany wprowadza.")
+        description="Krok 3: Zoptymalizowany, PEŁNY system prompt. Musi zawierać regułę wypracowaną w `abstract_rule`. Kategoryczny zakaz hardkodowania w nim rozwiązań specyficznych dla pojedynczego przypadku."
+    )
+    explanation: str = Field(
+        description="Krok 4: Wyjaśnienie mechanizmu. Dlaczego zaktualizowany prompt zapobiegnie całej KLASIE podobnych błędów, a nie tylko temu jednemu?"
+    )
     
 class AnalizeState(TypedDict):
     messages:  Annotated[list[BaseMessage], add_messages]

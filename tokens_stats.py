@@ -92,6 +92,7 @@ class TokenCounter:
             f"TokenCounter(calls={s['calls']}, "
             f"in={s['input_tokens']}, out={s['output_tokens']}, total={s['total_tokens']})"
         )
+    
 
 
 tokens_counter = TokenCounter()

@@ -1,7 +1,7 @@
 from state import State
 from langgraph.graph import StateGraph, START, END
-from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage
-from gaia.design.design_structures import DesignState, DesignFeedback, AgentModel, ServiceModel, AcquaintanceModel, OptimalizationFeedback
+from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage, BaseMessage
+from gaia.design.design_structures import DesignState, DesignFeedback, AgentModel, ServiceModel, AcquaintanceModel, OptimizationFeedback
 from gaia.design.design_prompts import DEFAULT_CRITIC_AGENTS_PROMPT, DEFAULT_AGENTS_PROMPT, DEFAULT_SERVICE_PROMPT, DEFAULT_CRITIC_SERVICE_PROMPT, DEFAULT_ACQUAINTANCES_PROMPT, DEFAULT_CRITIC_ACQUAINTANCES_PROMPT
 from tokens_stats import tokens_counter
 from models import creator_llm, critic_llm, optimization_llm
@@ -48,13 +48,24 @@ Zwróć zoptymalizowany prompt oraz krótkie wyjaśnienie: "Dlaczego ta zmiana z
     
     Feedback krytyka:\n{state['messages'][-1].content} \n
     """)
-    response: OptimalizationFeedback= optimization_llm.with_structured_output(OptimalizationFeedback).invoke([system] +[message])
+    response: OptimizationFeedback= optimization_llm.with_structured_output(OptimizationFeedback).invoke([system] +[message])
     print(f"Zoptymalizowany prompt dla {DESIGN_LAYER_NAME}-{phase}:\n\n {response.model_dump_json(indent=2)}\n\n")
     return {
         f"prompt_{phase}": response.new_system_prompt
     }
  
+def only_last_messages(messages: BaseMessage, n=2) -> list[BaseMessage]:
+    if len(messages) <= n:
+        return messages
+    
+    return messages[-n:]
 
+def prepare_feedback_message(parsed: DesignFeedback) -> HumanMessage:
+    feedback_text = "Znaleziono następujące problemy:\n"
+    for issue in [i for i in parsed.issues if i.need_to_fix]:
+        feedback_text += f"- {issue.description}\n  Wskazówka: {issue.fix}\n"
+        
+    return HumanMessage(content=f"[FEEDBACK KRYTYKA]:\n{feedback_text}")
 
 # Model agentów
 def call_agent_model(state: DesignState) -> dict:
@@ -62,7 +73,7 @@ def call_agent_model(state: DesignState) -> dict:
 
     structured_llm = creator_llm.with_structured_output(AgentModel, include_raw=True)
     response = structured_llm.invoke([system, HumanMessage(content=state["analysis_context"])] +
-                                     state["messages"])
+                                     only_last_messages(state["messages"]))
     tokens_counter.add(DESIGN_LAYER_NAME, "DefineAgents", response)
     
     raw = response["raw"]
@@ -92,7 +103,7 @@ def call_critic_agents(state: DesignState) -> dict:
     logger.info("%s \t Krytyk agentów:\n%s",DESIGN_LAYER_NAME,  parsed.model_dump_json(indent=2))
 
     msg = (
-        HumanMessage(f"[FEEDBACK KRYTYKA]:\n{parsed.message}") 
+        prepare_feedback_message(parsed) 
         if not parsed.is_complete 
         else [RemoveMessage(id=m.id) for m in state["messages"]]
     )
@@ -126,7 +137,7 @@ def call_service_model(state: DesignState) -> dict:
     structured_llm = creator_llm.with_structured_output(ServiceModel, include_raw=True)
     response = structured_llm.invoke(
         [system,HumanMessage(content=f"{state["analysis_context"]}\n Model agentów: {state["agent_model"].model_dump_json()}")] +
-        state["messages"]
+        only_last_messages(state["messages"])
     )
     tokens_counter.add(DESIGN_LAYER_NAME, "DefineService", response)
     parsed: ServiceModel = response["parsed"]
@@ -156,7 +167,7 @@ def call_critic_services(state: DesignState) -> dict:
     logger.info("Krytyk usług:\n%s", parsed.model_dump_json(indent=2))
 
     msg = (
-        HumanMessage(content=f"[FEEDBACK KRYTYKA]:\n{parsed.message}") 
+        prepare_feedback_message(parsed)
         if not parsed.is_complete 
         else [RemoveMessage(id=m.id) for m in state["messages"]]
     )
@@ -191,7 +202,7 @@ def call_acquaintance_model(state: DesignState) -> dict:
     structured_llm = creator_llm.with_structured_output(AcquaintanceModel, include_raw=True)
     response = structured_llm.invoke(
         [system, HumanMessage(content=f"{state['analysis_context']}\n Model agentów: {state['agent_model'].model_dump_json()}\n Model usług: {state['service_model'].model_dump_json()}")] +
-        state["messages"]
+        only_last_messages(state["messages"])
     )
     tokens_counter.add(DESIGN_LAYER_NAME, "DefineAcquaintance", response)    
 
@@ -222,7 +233,7 @@ def call_critic_acquaintance(state: DesignState) -> dict:
     logger.info("Krytyk znajomości:\n%s", parsed.model_dump_json(indent=2))
     
     msg = (
-        HumanMessage(content=f"[FEEDBACK KRYTYKA]:\n{parsed.message}") 
+        prepare_feedback_message(parsed)
         if not parsed.is_complete 
         else [RemoveMessage(id=m.id) for m in state["messages"]]
     )

@@ -1,0 +1,1932 @@
+[
+  {
+    "id": "1",
+    "title": "System zarządzania schroniskiem dla zwierzątv2",
+    "description": "Schroniska dla zwierząt mierzą się z wyzwaniem zapewnienia stałej, adekwatnej opieki dużej liczby podopiecznych mając jednocześnie mocno ograniczone zasoby ludzkie jak i finansowe. Ośrodki te realizują cykliczne, powtarzalne czynności, które bezpośrednio wpływają na dobrostan zwierząt. Do wspomnianych czynności zaliczamy na przykład:● karmienie zwierząt● sprzątanie pomieszczeń● szczepienie zwierząt● wyprowadzanie zwierząt● przyjęcia zwierząt● adopcje zwierzątWyzwanie polega na jednoczesnym zapewnieniu wysokiej jakości opieki codziennej oraz płynnym prowadzeniu przyjęć/adopcji, przy ograniczonej liczbie lub umiejętności opiekunów, lub wolontariuszy, niestabilnej dostępności i wielu zależnościach.",
+    "requirements": [
+      "Rejestr zwierząt - system zapewnia prowadzenie cyfrowej ewidencji zwierząt z możliwością dodawania, edycji oraz śledzenia stanów zdrowia, statusów (np. \"nakarmiony\", \"na spacerze\") i historii zdarzeń.",
+      "Rejestr pracowników i ról - system zapewnia możliwość zarządzania kontami i rolami pracowników (opiekun, sprzątacz, weterynarz) wraz z przypisaniem kompetencji, limitów i preferencji.",
+      "Dostępność personelu - system umożliwia zgłaszanie i aktualizowanie slotów dostępności przez pracowników.",
+      "Generowanie zadań opieki - system automatycznie generuje zadania takie jak karmienie, spacery, szczepienie czy sprzątanie (cyklicznie lub na żądanie).",
+      "Automatyczny przydział zadań - system zapewnia automatyczne dopasowanie zadań do dostępnych pracowników na podstawie ich kompetencji, preferencji i aktualnego obciążenia.",
+      "Monitorowanie cyklu życia zadania - system umożliwia śledzenie pełnego cyklu życia zadania oraz potwierdzanie wykonania przez pracowników.",
+      "Kalendarz szczepień - system automatycznie planuje i monitoruje okna szczepień oraz generuje odpowiednie zadania dla personelu.",
+      "Sprzątanie pomieszczeń - system automatycznie generuje zadania sprzątania dziennego i na żądanie na podstawie stanu pomieszczeń.",
+      "Przyjęcia zwierząt - system zapewnia proces rejestracji nowych zwierząt, przeprowadzenie badań wstępnych oraz włączenie ich do harmonogramu opieki.",
+      "Priorytetyzacja zadań - system automatycznie rozróżnia zadania krytyczne od rutynowych i dynamicznie aktualizuje priorytety w zależności od sytuacji.",
+      "Sprawiedliwa rotacja opieki - system zapewnia mechanizm równomiernego rozdziału zadań między zwierzęta i opiekunów, dbając o sprawiedliwą rotację.",
+      "Obsługa nagłych zdarzeń - system zapewnia natychmiastową rekonfigurację planu w przypadku nagłych zdarzeń, takich jak przyjęcie nowego zwierzęcia lub nieobecność wolontariusza.",
+      "Wsparcie procesu adopcyjnego - system prowadzi proces adopcji, od złożenia wniosku po finalizację adopcji."
+    ],
+    "gaia_artifacts": {
+      "roles": [
+        {
+          "name": "Koordynator (Coordinator)",
+          "description": "odpowiada za centralne planowanie, przydzielanie i monitorowanie realizacji podstawowych zadań oraz szczepień. Reorganizuje harmonogramy w przypadku zdarzeń nagłych, zmian dostępności personelu lub priorytetów.",
+          "activities": [
+            "AssignCleanTask",
+            "AssignFeedTask",
+            "AssignWalkTask",
+            "AssignVaccinationTask",
+            "AdoptionApplicationTask",
+            "HealthRequestTask",
+            "AssignInitialCheckupTask",
+            "UpdateWorkerAvailabilityTask"
+          ],
+          "protocols": [
+            "CleanRequest",
+            "ConfirmCleanTask",
+            "FeedRequest",
+            "ConfirmFeedTask",
+            "WalkRequest",
+            "ConfirmWalkTask",
+            "ConfirmVaccinationTask",
+            "AdoptionApplicationRequest",
+            "ConfirmAdoptionApplicationTask",
+            "HealthRequest",
+            "ConfirmHealthRequestTask",
+            "RegisterNewAnimal",
+            "ConfirmInitialCheckupTask",
+            "ConfirmUpdateWorkerAvailabilityTask"
+          ],
+          "permissions": {
+            "read": [
+              "newCleanRequest",
+              "workerId",
+              "workerAvailability",
+              "roomState",
+              "taskStatus",
+              "newFeedRequest",
+              "animalFeedState",
+              "newWalkRequest",
+              "animalWalkState",
+              "newWorkerAvailability",
+              "newAnimalRegistration",
+              "animalHealthState",
+              "newHealthRequest",
+              "newAdoptionApplication",
+              "animalAdoptionState"
+            ],
+            "write": [],
+            "produce": [
+              "taskId",
+              "taskStatus"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "COORDINATOR = ( (CleanRequest . AssignCleanTask . ConfirmCleanTask) | (FeedRequest . AssignFeedTask . ConfirmFeedTask) | (WalkRequest . AssignWalkTask . ConfirmWalkTask) | (AssignVaccinationTask . ConfirmVaccinationTask) | (AdoptionApplicationRequest . AdoptionApplicationTask . ConfirmAdoptionApplicationTask) | (HealthRequest . HealthRequestTask . ConfirmHealthRequestTask) | (RegisterNewAnimal . AssignInitialCheckupTask . ConfirmInitialCheckupTask) | (UpdateWorkerAvailabilityTask . ConfirmUpdateWorkerAvailabilityTask) )*",
+            "safety": []
+          }
+        },
+        {
+          "name": "Opiekun (Caretaker)",
+          "description": "reprezentuje pracownika odpowiedzialnego za codzienną opiekę nad zwierzętami. Zgłasza swoją dostępność, realizuje przydzielone zadania takie jak karmienie czy spacery, a także potwierdza wykonanie powierzonych obowiązków.",
+          "activities": [
+            "ConfirmFeedTask",
+            "ConfirmWalkTask",
+            "ConfirmUpdateWorkerAvailabilityTask"
+          ],
+          "protocols": [
+            "AssignFeedTask",
+            "AssignWalkTask",
+            "UpdateWorkerAvailabilityTask"
+          ],
+          "permissions": {
+            "read": [
+              "animalId",
+              "taskId",
+              "taskStatus"
+            ],
+            "write": [],
+            "produce": [
+              "newWorkerAvailability",
+              "animalFeedState",
+              "animalWalkState",
+              "taskStatus"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "CARETAKER = ( (AssignFeedTask . ConfirmFeedTask) | (AssignWalkTask . ConfirmWalkTask) | (UpdateWorkerAvailabilityTask . ConfirmUpdateWorkerAvailabilityTask) )*",
+            "safety": [
+              "∀ animalId, taskId: ConfirmFeedTask(taskId, animalId) ⇒ set(animalFeedState(animalId),\"fed\") ∧ set(taskStatus(taskId),\"done\")",
+              "∀ animalId, taskId: ConfirmWalkTask(taskId, animalId) ⇒ set(animalWalkState(animalId),\"walked\") ∧ set(taskStatus(taskId),\"done\")"
+            ]
+          }
+        },
+        {
+          "name": "Sprzątacz (Cleaner)",
+          "description": "wykonuje zadania sprzątania dziennego oraz reaguje na zlecenia generowane na żądanie.",
+          "activities": [
+            "ConfirmCleanTask",
+            "ConfirmUpdateWorkerAvailabilityTask"
+          ],
+          "protocols": [
+            "AssignCleanTask",
+            "UpdateWorkerAvailabilityTask"
+          ],
+          "permissions": {
+            "read": [
+              "roomId",
+              "taskId",
+              "taskStatus"
+            ],
+            "write": [],
+            "produce": [
+              "newWorkerAvailability",
+              "roomState",
+              "taskStatus"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "CLEANER = ( (AssignCleanTask . ConfirmCleanTask) | (UpdateWorkerAvailabilityTask . ConfirmUpdateWorkerAvailabilityTask) )*",
+            "safety": [
+              "∀ roomId, taskId: ConfirmCleanTask(taskId, roomId) ⇒ set(roomState(roomId), \"clean\") ∧ set(taskStatus(taskId), \"done\")"
+            ]
+          }
+        },
+        {
+          "name": "Weterynarz (Veterinarian)",
+          "description": "realizuje zadania związane z opieką medyczną (w tym szczepień).",
+          "activities": [
+            "ConfirmVaccinationTask",
+            "ConfirmHealthRequestTask",
+            "ConfirmInitialCheckupTask",
+            "ConfirmUpdateWorkerAvailabilityTask"
+          ],
+          "protocols": [
+            "AssignVaccinationTask",
+            "HealthRequestTask",
+            "AssignInitialCheckupTask",
+            "UpdateWorkerAvailabilityTask"
+          ],
+          "permissions": {
+            "read": [
+              "animalId",
+              "taskId",
+              "taskStatus"
+            ],
+            "write": [],
+            "produce": [
+              "newWorkerAvailability",
+              "taskStatus",
+              "animalHealthState"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "VETERINARIAN = ( (AssignVaccinationTask . ConfirmVaccinationTask) | (AssignInitialCheckupTask . ConfirmInitialCheckupTask) | (HealthRequestTask . ConfirmHealthRequestTask) | (UpdateWorkerAvailabilityTask . ConfirmUpdateWorkerAvailabilityTask) )*",
+            "safety": [
+              "ConfirmVaccinationTask(taskId) ⇒ set(taskStatus(taskId),\"done\")",
+              "ConfirmHealthRequestTask(taskId,animalId) ⇒ set(animalHealthState(animalId), \"healthy\") ∧ set(taskStatus(taskId),\"done\")",
+              "ConfirmInitialCheckupTask(taskId,animalId) ⇒ set(animalHealthState(animalId),\"healthy\") ∧ set(taskStatus(taskId),\"done\")"
+            ]
+          }
+        },
+        {
+          "name": "Asystent Zwierzęcia (Animal Assistant)",
+          "description": "reprezentuje indywidualnego podopiecznego schroniska. Monitoruje stan zwierzęcia (np. głód, potrzeba ruchu) i emituje żądania opieki.",
+          "activities": [
+            "FeedRequest",
+            "WalkRequest",
+            "HealthRequest"
+          ],
+          "protocols": [
+            "ConfirmFeedTask",
+            "ConfirmWalkTask",
+            "ConfirmHealthRequestTask",
+            "ConfirmAdoptionApplicationTask",
+            "ConfirmInitialCheckupTask"
+          ],
+          "permissions": {
+            "read": [
+              "animalId",
+              "animalFeedState",
+              "animalWalkState",
+              "animalHealthState",
+              "animalAdoptionState",
+              "taskStatus"
+            ],
+            "write": [],
+            "produce": [
+              "newFeedRequest",
+              "newWalkRequest",
+              "newHealthRequest"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "ANIMAL_ASSISTANT = ( (FeedRequest . ConfirmFeedTask) | (WalkRequest . ConfirmWalkTask) | (HealthRequest . ConfirmHealthRequestTask) | ConfirmInitialCheckupTask | ConfirmAdoptionApplicationTask )*",
+            "safety": [
+              "animalFeedState(animalId)=\"hungry\" ∧ noneAssigned(feed,animalId) ⇒ newFeedRequest(animalId)",
+              "animalWalkState(animalId)=\"needsWalk\" ∧ noneAssigned(walk,animalId) ⇒ newWalkRequest(animalId)",
+              "animalHealthState(animalId)=\"sick\" ∧ noneAssigned(health,animalId) ⇒ newHealthRequest(animalId)",
+              "∀ taskId: ConfirmFeedTask(taskId,animalId) ⇒ concerns(taskId,animalId)",
+              "∀ taskId: ConfirmWalkTask(taskId,animalId) ⇒ concerns(taskId,animalId)",
+              "∀ taskId: ConfirmHealthRequestTask(taskId,animalId) ⇒ concerns(taskId,animalId)"
+            ]
+          }
+        },
+        {
+          "name": "Pomieszczenie (Room)",
+          "description": "generuje zadania sprzątania.",
+          "activities": [
+            "CleanRequest"
+          ],
+          "protocols": [
+            "ConfirmCleanTask"
+          ],
+          "permissions": {
+            "read": [
+              "roomId",
+              "roomState",
+              "taskStatus"
+            ],
+            "write": [],
+            "produce": [
+              "newCleanRequest"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "ROOM = (CleanRequest . ConfirmCleanTask)*",
+            "safety": [
+              "roomState(roomId)=\"dirty\" ∧ noneAssigned(clean,roomId) ⇒ newCleanRequest(roomId)",
+              "∀ taskId: ConfirmCleanTask(taskId,roomId) ⇒ concerns(taskId,roomId) (tylko zadanie dotyczące tego pomieszczenia)."
+            ]
+          }
+        },
+        {
+          "name": "Recepcja (Reception)",
+          "description": "obsługuje proces przyjęcia zwierząt do schroniska, w tym rejestrację nowych podopiecznych, a następnie żądanie dodania ich do harmonogramu opieki.",
+          "activities": [
+            "RegisterNewAnimal"
+          ],
+          "protocols": [],
+          "permissions": {
+            "read": [],
+            "write": [],
+            "produce": [
+              "newAnimalRegistration"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "RECEPTION = RegisterNewAnimal*",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Adopcja (Adoption)",
+          "description": "prowadzi proces adopcyjny, obejmujący obsługę wniosków.",
+          "activities": [
+            "ConfirmAdoptionApplicationTask"
+          ],
+          "protocols": [
+            "AdoptionApplicationTask"
+          ],
+          "permissions": {
+            "read": [
+              "animalId",
+              "taskId"
+            ],
+            "write": [],
+            "produce": [
+              "animalAdoptionState",
+              "taskStatus"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "ADOPTION = (AdoptionApplicationTask . ConfirmAdoptionApplicationTask)*",
+            "safety": [
+              "∀ taskId: ConfirmAdoptionApplicationTask(taskId,animalId) ⇒ set(animalAdoptionState(animalId),\"adopted\") ∧ set(taskStatus(taskId),\"done\")"
+            ]
+          }
+        },
+        {
+          "name": "Wnioskodawca (Applicant)",
+          "description": "reprezentuje osobę ubiegającą się o adopcję.",
+          "activities": [
+            "AdoptionApplicationRequest"
+          ],
+          "protocols": [
+            "ConfirmAdoptionApplicationTask"
+          ],
+          "permissions": {
+            "read": [
+              "animalId",
+              "animalAdoptionState",
+              "taskStatus"
+            ],
+            "write": [],
+            "produce": [
+              "newAdoptionApplication"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "APPLICANT = (AdoptionApplicationRequest . ConfirmAdoptionApplicationTask)*",
+            "safety": [
+              "animalAdoptionState(animalId)=\"available\" ∧ noneAssigned(adoption,animalId) ⇒ newAdoptionApplication(animalId)",
+              "∀ taskId: ConfirmAdoptionApplicationTask(taskId,animalId) ⇒ concerns(taskId,animalId) (potwierdza tylko swój wniosek)"
+            ]
+          }
+        }
+      ],
+      "interactions": [
+        {
+          "goal": "Poproś o czyszczenie pomieszczenia",
+          "protocol_name": "CleanRequest",
+          "description": "Inicjacja procesu sprzątania pomieszczenia przez zgłoszenie zapotrzebowania do koordynatora.",
+          "initiator": "Room",
+          "responder": "Coordinator",
+          "inputs": [],
+          "outputs": [
+            "newCleanRequest"
+          ]
+        },
+        {
+          "goal": "Przydziel zadanie sprzątania",
+          "protocol_name": "AssignCleanTask",
+          "description": "Koordynator przydziela zadanie sprzątania konkretnemu pracownikowi na podstawie dostępności i otrzymanego zgłoszenia.",
+          "initiator": "Coordinator",
+          "responder": "Cleaner",
+          "inputs": [
+            "workerAvailability",
+            "newCleanRequest"
+          ],
+          "outputs": [
+            "taskId"
+          ]
+        },
+        {
+          "goal": "Potwierdź posprzątanie pomieszczenie",
+          "protocol_name": "ConfirmCleanTask",
+          "description": "Potwierdzenie zakończenia prac porządkowych oraz aktualizacja statusu zadania i pomieszczenia.",
+          "initiator": "Cleaner",
+          "responder": "Room, Coordinator",
+          "inputs": [
+            "taskId"
+          ],
+          "outputs": [
+            "roomState",
+            "taskStatus"
+          ]
+        },
+        {
+          "goal": "Poproś o karmienie",
+          "protocol_name": "FeedRequest",
+          "description": "Zgłoszenie zapotrzebowania na nakarmienie zwierząt do koordynatora.",
+          "initiator": "Animal Assistant",
+          "responder": "Coordinator",
+          "inputs": [],
+          "outputs": [
+            "newFeedRequest"
+          ]
+        },
+        {
+          "goal": "Przydziel zadanie karmienia",
+          "protocol_name": "AssignFeedTask",
+          "description": "Koordynator wyznacza opiekuna do wykonania zadania karmienia.",
+          "initiator": "Coordinator",
+          "responder": "Caretaker",
+          "inputs": [
+            "workerAvailability",
+            "newFeedRequest"
+          ],
+          "outputs": [
+            "taskId"
+          ]
+        },
+        {
+          "goal": "Potwierdź nakarmienie zwierzęcia",
+          "protocol_name": "ConfirmFeedTask",
+          "description": "Potwierdzenie wykonania karmienia i aktualizacja stanu odżywienia zwierząt.",
+          "initiator": "Caretaker",
+          "responder": "Animal Assistant, Coordinator",
+          "inputs": [
+            "taskId"
+          ],
+          "outputs": [
+            "animalFeedState",
+            "taskStatus"
+          ]
+        },
+        {
+          "goal": "Poproś o wyprowadzenie",
+          "protocol_name": "WalkRequest",
+          "description": "Zgłoszenie prośby o wyprowadzenie zwierzęcia przez asystenta do koordynatora.",
+          "initiator": "Animal Assistant",
+          "responder": "Coordinator",
+          "inputs": [],
+          "outputs": [
+            "newWalkRequest"
+          ]
+        },
+        {
+          "goal": "Przydziel zadanie wyprowadzenia",
+          "protocol_name": "AssignWalkTask",
+          "description": "Koordynator przydziela zadanie wyprowadzenia zwierzęcia opiekunowi na podstawie dostępności pracowników i otrzymanego zgłoszenia.",
+          "initiator": "Coordinator",
+          "responder": "Caretaker",
+          "inputs": [
+            "workerAvailability",
+            "newWalkRequest"
+          ],
+          "outputs": [
+            "taskId"
+          ]
+        },
+        {
+          "goal": "Potwierdź wyprowadzenie zwierzęcia",
+          "protocol_name": "ConfirmWalkTask",
+          "description": "Opiekun potwierdza wykonanie zadania wyprowadzenia zwierzęcia, co aktualizuje status zadania oraz stan wyprowadzenia zwierzęcia.",
+          "initiator": "Caretaker",
+          "responder": "Animal Assistant, Coordinator",
+          "inputs": [
+            "taskId"
+          ],
+          "outputs": [
+            "animalWalkState",
+            "taskStatus"
+          ]
+        },
+        {
+          "goal": "Przydziel zadanie zaszczepienia",
+          "protocol_name": "AssignVaccinationTask",
+          "description": "Koordynator przydziela zadanie zaszczepienia zwierzęcia weterynarzowi na podstawie dostępności kadr.",
+          "initiator": "Coordinator",
+          "responder": "Veterinarian",
+          "inputs": [
+            "workerAvailability"
+          ],
+          "outputs": [
+            "taskId"
+          ]
+        },
+        {
+          "goal": "Potwierdź zaszczepienie zwierzęcia",
+          "protocol_name": "ConfirmVaccinationTask",
+          "description": "Weterynarz potwierdza koordynatorowi wykonanie szczepienia, co skutkuje aktualizacją statusu zadania.",
+          "initiator": "Veterinarian",
+          "responder": "Coordinator",
+          "inputs": [
+            "taskId"
+          ],
+          "outputs": [
+            "taskStatus"
+          ]
+        },
+        {
+          "goal": "Zaktualizuj dostępność",
+          "protocol_name": "UpdateWorkerAvailabilityTask",
+          "description": "Pracownik (opiekun, weterynarz lub sprzątacz) przesyła informację o swojej nowej dostępności do koordynatora.",
+          "initiator": "Caretaker / Veterinarian / Cleaner",
+          "responder": "Coordinator",
+          "inputs": [],
+          "outputs": [
+            "newWorkerAvailability"
+          ]
+        },
+        {
+          "goal": "Potwierdź aktualizację dostępności",
+          "protocol_name": "ConfirmUpdateWorkerAvailabilityTask",
+          "description": "Koordynator potwierdza przetworzenie informacji o dostępności pracownika.",
+          "initiator": "Coordinator",
+          "responder": "Caretaker / Veterinarian / Cleaner",
+          "inputs": [
+            "workerAvailability",
+            "newWorkerAvailability"
+          ],
+          "outputs": [
+            "taskStatus"
+          ]
+        },
+        {
+          "goal": "Zgłoś rejestrację nowego zwierzęcia",
+          "protocol_name": "RegisterNewAnimal",
+          "description": "Recepcja zgłasza koordynatorowi konieczność zarejestrowania nowego zwierzęcia w systemie.",
+          "initiator": "Reception",
+          "responder": "Coordinator",
+          "inputs": [],
+          "outputs": [
+            "newAnimalRegistration"
+          ]
+        },
+        {
+          "goal": "Przydziel badanie wstępne",
+          "protocol_name": "AssignInitialCheckupTask",
+          "description": "Koordynator przydziela zadanie wykonania wstępnego badania weterynaryjnego dla nowo zarejestrowanego zwierzęcia.",
+          "initiator": "Coordinator",
+          "responder": "Veterinarian",
+          "inputs": [
+            "workerAvailability",
+            "newAnimalRegistration"
+          ],
+          "outputs": [
+            "taskId"
+          ]
+        },
+        {
+          "goal": "Potwierdź ukończone badanie wstępne",
+          "protocol_name": "ConfirmInitialCheckupTask",
+          "description": "Weterynarz potwierdza wykonanie badania wstępnego, aktualizując stan zdrowia zwierzęcia oraz status zadania dla koordynatora i asystenta.",
+          "initiator": "Veterinarian",
+          "responder": "Coordinator, Animal Assistant",
+          "inputs": [
+            "taskId"
+          ],
+          "outputs": [
+            "animalHealthState",
+            "taskStatus"
+          ]
+        },
+        {
+          "goal": "Zgłoś potrzebę opieki medycznej",
+          "protocol_name": "HealthRequest",
+          "description": "Asystent zgłasza koordynatorowi konieczność interwencji medycznej dla zwierzęcia.",
+          "initiator": "Animal Assistant",
+          "responder": "Coordinator",
+          "inputs": [],
+          "outputs": [
+            "newHealthRequest"
+          ]
+        },
+        {
+          "goal": "Przydziel badanie medyczne",
+          "protocol_name": "HealthRequestTask",
+          "description": "Koordynator przydziela zadanie wykonania badania weterynarzowi na podstawie zgłoszenia i dostępności personelu.",
+          "initiator": "Coordinator",
+          "responder": "Veterinarian",
+          "inputs": [
+            "workerAvailability",
+            "newHealthRequest"
+          ],
+          "outputs": [
+            "taskId"
+          ]
+        },
+        {
+          "goal": "Potwierdź ukończone leczenie",
+          "protocol_name": "ConfirmHealthRequestTask",
+          "description": "Weterynarz potwierdza zakończenie leczenia, aktualizując stan zdrowia zwierzęcia oraz status zadania dla koordynatora i asystenta.",
+          "initiator": "Veterinarian",
+          "responder": "Coordinator, Animal Assistant",
+          "inputs": [
+            "taskId"
+          ],
+          "outputs": [
+            "animalHealthState",
+            "taskStatus"
+          ]
+        },
+        {
+          "goal": "Złóż wniosek adopcyjny",
+          "protocol_name": "AdoptionApplicationRequest",
+          "description": "Osoba zainteresowana (Applicant) składa wniosek o adopcję do koordynatora.",
+          "initiator": "Applicant",
+          "responder": "Coordinator",
+          "inputs": [],
+          "outputs": [
+            "newAdoptionApplication"
+          ]
+        },
+        {
+          "goal": "Przydziel zadanie obsłużenia wniosku",
+          "protocol_name": "AdoptionApplicationTask",
+          "description": "Koordynator przekazuje wniosek do działu adopcji w celu jego rozpatrzenia.",
+          "initiator": "Coordinator",
+          "responder": "Adoption",
+          "inputs": [
+            "newAdoptionApplication"
+          ],
+          "outputs": [
+            "taskId"
+          ]
+        },
+        {
+          "goal": "Potwierdź obsłużenie wniosku",
+          "protocol_name": "ConfirmAdoptionApplicationTask",
+          "description": "Dział adopcji potwierdza rozpatrzenie wniosku, informując o zmianie statusu adopcyjnego zwierzęcia zainteresowane strony.",
+          "initiator": "Adoption",
+          "responder": "Coordinator, Applicant, Animal Assistant",
+          "inputs": [
+            "taskId"
+          ],
+          "outputs": [
+            "animalAdoptionState",
+            "taskStatus"
+          ]
+        }
+      ],
+      "agent_model": [
+        {
+          "name": "CoordinatorAgent",
+          "aggregated_roles": [
+            "Coordinator"
+          ],
+          "cardinality": "1"
+        },
+        {
+          "name": "ReceptionAgent",
+          "aggregated_roles": [
+            "Reception"
+          ],
+          "cardinality": "1"
+        },
+        {
+          "name": "AdoptionAgent",
+          "aggregated_roles": [
+            "Adoption"
+          ],
+          "cardinality": "1"
+        },
+        {
+          "name": "WorkerAgent",
+          "aggregated_roles": [
+            "Caretaker",
+            "Cleaner",
+            "Veterinarian"
+          ],
+          "cardinality": "+"
+        },
+        {
+          "name": "RoomAgent",
+          "aggregated_roles": [
+            "Room"
+          ],
+          "cardinality": "+"
+        },
+        {
+          "name": "AnimalAssistantAgent",
+          "aggregated_roles": [
+            "Animal Assistant"
+          ],
+          "cardinality": "*"
+        },
+        {
+          "name": "ApplicantAgent",
+          "aggregated_roles": [
+            "Applicant"
+          ],
+          "cardinality": "*"
+        }
+      ],
+      "service_model": [
+        {
+          "name": "request cleaning",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "roomId",
+            "roomState"
+          ],
+          "outputs": [
+            "newCleanRequest"
+          ],
+          "pre_condition": "roomState='dirty' ∧ noneAssigned(clean, roomId)",
+          "post_condition": "newCleanRequest ≠ NULL"
+        },
+        {
+          "name": "assign clean task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "newCleanRequest",
+            "workerAvailability"
+          ],
+          "outputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "pre_condition": "newCleanRequest ≠ NULL",
+          "post_condition": "taskStatus='inProgress'"
+        },
+        {
+          "name": "confirm clean task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "taskId",
+            "roomId",
+            "taskStatus"
+          ],
+          "outputs": [
+            "roomState",
+            "taskStatus"
+          ],
+          "pre_condition": "taskStatus='inProgress'",
+          "post_condition": "roomState='clean' ∧ taskStatus='done'"
+        },
+        {
+          "name": "request feeding",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "animalId",
+            "animalFeedState"
+          ],
+          "outputs": [
+            "newFeedRequest"
+          ],
+          "pre_condition": "animalFeedState='hungry' ∧ noneAssigned(feed, animalId)",
+          "post_condition": "newFeedRequest ≠ NULL"
+        },
+        {
+          "name": "assign feed task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "newFeedRequest",
+            "workerAvailability"
+          ],
+          "outputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "pre_condition": "newFeedRequest ≠ NULL",
+          "post_condition": "taskStatus='inProgress'"
+        },
+        {
+          "name": "confirm feed task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "taskId",
+            "animalId",
+            "taskStatus"
+          ],
+          "outputs": [
+            "animalFeedState",
+            "taskStatus"
+          ],
+          "pre_condition": "taskStatus='inProgress'",
+          "post_condition": "animalFeedState='fed' ∧ taskStatus='done'"
+        },
+        {
+          "name": "request walk",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "animalId",
+            "animalWalkState"
+          ],
+          "outputs": [
+            "newWalkRequest"
+          ],
+          "pre_condition": "animalWalkState='needsWalk' ∧ noneAssigned(walk, animalId)",
+          "post_condition": "newWalkRequest ≠ NULL"
+        },
+        {
+          "name": "assign walk task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "newWalkRequest",
+            "workerAvailability"
+          ],
+          "outputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "pre_condition": "newWalkRequest ≠ NULL",
+          "post_condition": "taskStatus='inProgress'"
+        },
+        {
+          "name": "confirm walk task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "taskId",
+            "animalId",
+            "taskStatus"
+          ],
+          "outputs": [
+            "animalWalkState",
+            "taskStatus"
+          ],
+          "pre_condition": "taskStatus='inProgress'",
+          "post_condition": "animalWalkState='walked' ∧ taskStatus='done'"
+        },
+        {
+          "name": "request health care",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "animalId",
+            "animalHealthState"
+          ],
+          "outputs": [
+            "newHealthRequest"
+          ],
+          "pre_condition": "animalHealthState='sick' ∧ noneAssigned(health, animalId)",
+          "post_condition": "newHealthRequest ≠ NULL"
+        },
+        {
+          "name": "assign health request task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "newHealthRequest",
+            "workerAvailability"
+          ],
+          "outputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "pre_condition": "newHealthRequest ≠ NULL",
+          "post_condition": "taskStatus='inProgress'"
+        },
+        {
+          "name": "confirm health request task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "taskId",
+            "animalId",
+            "taskStatus"
+          ],
+          "outputs": [
+            "animalHealthState",
+            "taskStatus"
+          ],
+          "pre_condition": "taskStatus='inProgress'",
+          "post_condition": "animalHealthState='healthy' ∧ taskStatus='done'"
+        },
+        {
+          "name": "assign vaccination task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "workerAvailability"
+          ],
+          "outputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "pre_condition": "dueForVaccination(animalId)",
+          "post_condition": "taskStatus='inProgress'"
+        },
+        {
+          "name": "confirm vaccination task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "outputs": [
+            "taskStatus"
+          ],
+          "pre_condition": "taskStatus='inProgress'",
+          "post_condition": "taskStatus='done'"
+        },
+        {
+          "name": "register new animal",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "animalPayload"
+          ],
+          "outputs": [
+            "newAnimalRegistration"
+          ],
+          "pre_condition": "true",
+          "post_condition": "newAnimalRegistration ≠ NULL"
+        },
+        {
+          "name": "assign initial checkup",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "newAnimalRegistration",
+            "workerAvailability"
+          ],
+          "outputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "pre_condition": "newAnimalRegistration ≠ NULL",
+          "post_condition": "taskStatus='inProgress'"
+        },
+        {
+          "name": "confirm initial checkup",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "taskId",
+            "animalId",
+            "taskStatus"
+          ],
+          "outputs": [
+            "animalHealthState",
+            "taskStatus"
+          ],
+          "pre_condition": "taskStatus='inProgress'",
+          "post_condition": "animalHealthState='healthy' ∧ taskStatus='done'"
+        },
+        {
+          "name": "submit adoption application",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "animalId",
+            "applicantId",
+            "animalAdoptionState"
+          ],
+          "outputs": [
+            "newAdoptionApplication"
+          ],
+          "pre_condition": "animalAdoptionState='available' ∧ noneAssigned(adoption, animalId)",
+          "post_condition": "newAdoptionApplication ≠ NULL"
+        },
+        {
+          "name": "adoption application task",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "newAdoptionApplication"
+          ],
+          "outputs": [
+            "taskId",
+            "taskStatus"
+          ],
+          "pre_condition": "newAdoptionApplication ≠ NULL",
+          "post_condition": "taskStatus='inProgress'"
+        },
+        {
+          "name": "confirm adoption application",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "taskId",
+            "animalId",
+            "taskStatus"
+          ],
+          "outputs": [
+            "animalAdoptionState",
+            "taskStatus"
+          ],
+          "pre_condition": "taskStatus='inProgress'",
+          "post_condition": "animalAdoptionState='adopted' ∧ taskStatus='done'"
+        },
+        {
+          "name": "update availability",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "workerId"
+          ],
+          "outputs": [
+            "newWorkerAvailability"
+          ],
+          "pre_condition": "true",
+          "post_condition": "newWorkerAvailability ≠ NULL"
+        },
+        {
+          "name": "confirm availability update",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            "workerId",
+            "newWorkerAvailability"
+          ],
+          "outputs": [
+            "taskStatus"
+          ],
+          "pre_condition": "newWorkerAvailability ≠ NULL",
+          "post_condition": "workerAvailability(workerId) = newWorkerAvailability"
+        }
+      ],
+      "acquaintance_model": [
+        {
+          "sender": "WorkerAgent",
+          "receiver": "RoomAgent",
+          "protocols": []
+        },
+        {
+          "sender": "WorkerAgent",
+          "receiver": "AnimalAssistantAgent",
+          "protocols": []
+        },
+        {
+          "sender": "WorkerAgent",
+          "receiver": "CoordinatorAgent",
+          "protocols": []
+        },
+        {
+          "sender": "CoordinatorAgent",
+          "receiver": "WorkerAgent",
+          "protocols": []
+        },
+        {
+          "sender": "RoomAgent",
+          "receiver": "CoordinatorAgent",
+          "protocols": []
+        },
+        {
+          "sender": "ReceptionAgent",
+          "receiver": "CoordinatorAgent",
+          "protocols": []
+        },
+        {
+          "sender": "ApplicantAgent",
+          "receiver": "CoordinatorAgent",
+          "protocols": []
+        },
+        {
+          "sender": "AnimalAssistantAgent",
+          "receiver": "CoordinatorAgent",
+          "protocols": []
+        },
+        {
+          "sender": "CoordinatorAgent",
+          "receiver": "AdoptionAgent",
+          "protocols": []
+        },
+        {
+          "sender": "AdoptionAgent",
+          "receiver": "AnimalAssistantAgent",
+          "protocols": []
+        },
+        {
+          "sender": "AdoptionAgent",
+          "receiver": "ApplicantAgent",
+          "protocols": []
+        },
+        {
+          "sender": "AdoptionAgent",
+          "receiver": "CoordinatorAgent",
+          "protocols": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "2",
+    "title": "System monitorowania i likwidacji infestacji karaluchów",
+    "description": "Współczesne budynki mieszkalne o dużym zagęszczeniu użytkowników, takie jak akademiki, są szczególnie narażone na problem infestacji szkodników, w tym karaluchów. Zjawisko stanowi nie tylko problem higieniczny, ale również wpływa na komfort życia studentów oraz generuje koszty po stronie administracji budynku. Obecnie w akademikach stosowane metody zwalczania infestacji mają głównie charakter reaktywny — administracja podejmuje działania dopiero po otrzymaniu zgłoszenia od mieszkańców. Takie podejście prowadzi do opóźnień w eliminacji szkodników i sprzyja dalszemu rozprzestrzenianiu się kolonii.",
+    "requirements": [
+      "System musi być w stanie zidentyfikować obecność karaluchów wmonitorowanym obszarze za pomocą czujników ruchu.",
+      "Każdy czujnik lub urządzenie agentowe ma obowiązek regularnie przesyłać danedo systemu centralnego lub agenta koordynującego.",
+      "Przesyłane dane z czujników powinny obejmować informacje o liczbie wykrytychosobników, lokalizacji i czasie zdarzenia.",
+      "System powinien analizować napływające dane, zidentyfikować wzorcepojawiania się karaluchów.",
+      "System powinien wskazywać miejsca o największej aktywności, abyzoptymalizować działania likwidacyjne.",
+      "W przypadku wykrycia aktywności karaluchów system powinien powiadamiaćfirmę dezynsekcyjną, poszkodowanych studentów i administrację.",
+      "System powinien poinformować studentów o złym stanie w ich pokojach ipotrzebie poprawienia stanu."
+    ],
+    "gaia_artifacts": {
+      "roles": [
+        {
+          "name": "Wykrywanie karaluchów (WK)",
+          "description": "Monitoruje pokoje pod kątem ruchu i inicjuje procedury interwencyjne w przypadku detekcji.",
+          "activities": [
+            "UpdateDormReadings",
+            "Detector"
+          ],
+          "protocols": [
+            "receive_SensorDataMessage",
+            "send_RoachDetectionMessage",
+            "send_DisinfectionMessage",
+            "send_AcknowledgeMessage"
+          ],
+          "permissions": {
+            "read": [
+              "SensorDataMessage"
+            ],
+            "write": [],
+            "produce": [
+              "RoachDetectionMessage",
+              "DisinfectionMessage",
+              "AcknowledgeMessage"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "WK=(UpdateDormReadings | Detector)ω; UpdateDormReadings=(receive_SensorDataMessage. send_AcknowledgeMessage); Detector=(DetectMovement.[send_RoachDetectionMessage].[send_DisinfectionMessage])",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Przewidywanie karaluchów (PK)",
+          "description": "Analizuje parametry środowiskowe w celu estymacji ryzyka wystąpienia szkodników.",
+          "activities": [
+            "UpdateDormReadings",
+            "Predictor",
+            "get_roach_chance"
+          ],
+          "protocols": [
+            "receive_SensorDataMessage",
+            "send_RoachPredictionMessage",
+            "send_AcknowledgeMessage"
+          ],
+          "permissions": {
+            "read": [
+              "SensorDataMessage"
+            ],
+            "write": [],
+            "produce": [
+              "RoachPredictionMessage",
+              "AcknowledgeMessage"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "PK=(UpdateDormReadings | Predictor)ω; UpdateDormReadings=(receive_SensorDataMessage. send_AcknowledgeMessage); Predictor=(get_roach_chance.[send_RoachPredictionMessage])",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Informowanie o stanie (IS)",
+          "description": "Wysyłanie informacji do administrację i studentów o złym stanie w ich pokoju (przewidywanie lub obecność karaluchów)",
+          "activities": [
+            "MyBehav",
+            "model_validate_json",
+            "log_to_file"
+          ],
+          "protocols": [
+            "receive_Message",
+            "send_Notification",
+            "send_AcknowledgeMessage"
+          ],
+          "permissions": {
+            "read": [
+              "RoachDetectionMessage",
+              "RoachPredictionMessage"
+            ],
+            "write": [],
+            "produce": [
+              "Notification",
+              "AcknowledgeMessage"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "IS=(MyBehav)ω; MyBehav=(receive_Message.model_validate_json.[log_to_file].[send_Notification].send_AcknowledgeMessage)",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Wezwanie ekipy dezynsekcyjnej (WE)",
+          "description": "Obsługuje zlecenia dezynsekcji i zarządza resetowaniem stanu symulacji po interwencji.",
+          "activities": [
+            "MyBehav"
+          ],
+          "protocols": [
+            "receive_DisinfectionMessage",
+            "send_disinfection_notification",
+            "send_success_notification",
+            "send_simulator_reset",
+            "send_AcknowledgeMessage"
+          ],
+          "permissions": {
+            "read": [
+              "DisinfectionMessage"
+            ],
+            "write": [],
+            "produce": [
+              "Notification",
+              "RoomMessage",
+              "AcknowledgeMessage"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "WE=(MyBehav)ω; MyBehav=(receive_DisinfectionMessage.send_disinfection_notification.send_success_notification.send_simulator_reset.send_AcknowledgeMessage)",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Symulacja środowiska (SIM)",
+          "description": "Generuje dane sensoryczne i aktualizuje stan pokojów na podstawie sygnałów z systemu.",
+          "activities": [
+            "MyBehav",
+            "ResetRoomBehaviour",
+            "get_roach_chance"
+          ],
+          "protocols": [
+            "receive_RoomMessage",
+            "send_SensorDataMessage",
+            "send_Notification"
+          ],
+          "permissions": {
+            "read": [
+              "RoomMessage"
+            ],
+            "write": [
+              "rooms_state"
+            ],
+            "produce": [
+              "SensorDataMessage",
+              "Notification"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "SIM=(MyBehav | ResetRoomBehaviour)ω; MyBehav=(get_roach_chance.send_SensorDataMessage.send_Notification); ResetRoomBehaviour=(receive_RoomMessage.reset_conditions)",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Prezentacja danych (GUI)",
+          "description": "Odpowiada za zbieranie powiadomień od wszystkich agentów i ich wizualizację dla użytkownika.",
+          "activities": [
+            "EventCollector",
+            "model_validate_json",
+            "put_to_queue"
+          ],
+          "protocols": [
+            "receive_Message"
+          ],
+          "permissions": {
+            "read": [
+              "Notification"
+            ],
+            "write": [],
+            "produce": [
+              "messages_queue_update"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "GUI=(EventCollector)ω; EventCollector=(receive_Message.model_validate_json.put_to_queue)",
+            "safety": [
+              "true"
+            ]
+          }
+        }
+      ],
+      "interactions": [
+        {
+          "goal": "Wysyłanie informacji o warunkach",
+          "protocol_name": "Wysyłanie informacji o warunkach",
+          "description": "Wyślij informację do centrali w celu podjęcia dalszych akcji (dane z czujników: temperatura, wilgotność, odpady biologiczne, informacja o wykryciu karalucha).",
+          "initiator": "SIM",
+          "responder": "WK",
+          "inputs": [],
+          "outputs": [
+            "Raport - dane z czujników(temperatura, wilgotność, odpadybiologiczne, informacja o wykryciukaralucha)"
+          ]
+        },
+        {
+          "goal": "Potwierdzenie odebrania raportu",
+          "protocol_name": "Odebranie raportu z warunkami",
+          "description": "Potwierdź odebranie raportu z aktualnymi warunkami w pomieszczeniu.",
+          "initiator": "WK",
+          "responder": "SIM",
+          "inputs": [
+            "Raport z informacją o warunkach"
+          ],
+          "outputs": [
+            "Potwierdzenie odbioru informacji o warunkach"
+          ]
+        },
+        {
+          "goal": "Wysyłanie informacji o warunkach",
+          "protocol_name": "Wysyłanie informacji o warunkach",
+          "description": "Wyślij informację do centrali w celu podjęciadalszych akcji",
+          "initiator": "SIM",
+          "responder": "PK",
+          "inputs": [],
+          "outputs": [
+            "Raport - dane z czujników(temperatura, wilgotność, odpadybiologiczne, informacja o wykryciukaralucha)"
+          ]
+        },
+        {
+          "goal": "Potwierdzenie odebrania raportu",
+          "protocol_name": "Odebranie raportu z warunkami",
+          "description": "Potwierdź odebranie raportu z aktualnymi warunkami w pomieszczeniu.",
+          "initiator": "PK",
+          "responder": "SIM",
+          "inputs": [
+            "Raport z informacją o warunkach"
+          ],
+          "outputs": [
+            "Potwierdzenie odbioru informacji o warunkach"
+          ]
+        },
+        {
+          "goal": "Wysyłanie informacji o podjętych działaniach",
+          "protocol_name": "Wysyłanie informacji o podjętych działaniach",
+          "description": "Wyślij logi o podjętych działaniach",
+          "initiator": "IS",
+          "responder": "GUI",
+          "inputs": [],
+          "outputs": [
+            "Przekazanie informacji o podjętych działaniach"
+          ]
+        },
+        {
+          "goal": "Potwierdzenie odebrania informacji o podjętych działaniach",
+          "protocol_name": "Odebranie informacji o podjętych działaniach",
+          "description": "Potwierdź odebranie informacji o podjętych działaniach",
+          "initiator": "GUI",
+          "responder": "IS",
+          "inputs": [
+            "Informacja o podjętych działaniach"
+          ],
+          "outputs": [
+            "Potwierdzenie odebrania informacji o podjętych działaniach"
+          ]
+        },
+        {
+          "goal": "Wysyłanie informacji o podjętych działaniach",
+          "protocol_name": "Wysyłanie informacji o podjętych działaniach",
+          "description": "Wyślij logi o podjętych działaniach",
+          "initiator": "WE",
+          "responder": "GUI",
+          "inputs": [],
+          "outputs": [
+            "Przekazanie informacji o podjętych działaniach"
+          ]
+        },
+        {
+          "goal": "Potwierdzenie odebrania informacji o podjętych działaniach",
+          "protocol_name": "Odebranie informacji o podjętych działaniach",
+          "description": "Potwierdź odebranie informacji o podjętych działaniach",
+          "initiator": "GUI",
+          "responder": "WE",
+          "inputs": [
+            "Informacja o podjętych działaniach"
+          ],
+          "outputs": [
+            "Potwierdzenie odebrania informacji o podjętych działaniach"
+          ]
+        },
+        {
+          "goal": "Wysyłanie informacji o wykryciu karaluchów",
+          "protocol_name": "Wysyłanie informacji o wykryciu karaluchów",
+          "description": "Wyślij informację do centrali w celu podjęcia dalszych akcji",
+          "initiator": "WK",
+          "responder": "IS",
+          "inputs": [
+            "Dane z czujników (ruch)"
+          ],
+          "outputs": [
+            "Raport z informacją o wykryciukaraluchów (decyzja o wykryciu,lokalizacja, czas, informacja owykryciu szkodników)"
+          ]
+        },
+        {
+          "goal": "Potwierdzenie odebrania raportu o wykryciu karaluchów",
+          "protocol_name": "Odebranie raportu o wykryciu karaluchów",
+          "description": "Potwierdź odebranie raportu z informacją o wykryciu karaluchów.",
+          "initiator": "IS",
+          "responder": "WK",
+          "inputs": [
+            "Raport z informacją o wykryciukaraluchów"
+          ],
+          "outputs": []
+        },
+        {
+          "goal": "Wysyłanie informacji o przewidywaniu",
+          "protocol_name": "Wysyłanie informacji o przewidywaniu",
+          "description": "Zwróć raport zawierający prognozy pojawienia się karaluchów.",
+          "initiator": "PK",
+          "responder": "IS",
+          "inputs": [
+            "Dane z czujników (temperatura, wilgotność, zapach)"
+          ],
+          "outputs": [
+            "Raport z prognozami (decyzja,wykryte sprzyjające warunki)"
+          ]
+        },
+        {
+          "goal": "Potwierdzenie odebrania raportu o prognozach",
+          "protocol_name": "Odebranie raportu o prognozach",
+          "description": "Potwierdź odebranie raportu z informacją o prognozach pojawienia się karaluchów.",
+          "initiator": "IS",
+          "responder": "PK",
+          "inputs": [
+            "Raport z prognozami"
+          ],
+          "outputs": []
+        },
+        {
+          "goal": "Zorganizowanie dezynsekcji po wykryciu infestacji",
+          "protocol_name": "Zorganizowanie dezynsekcji po wykryciu infestacji",
+          "description": "Odebranie raportu o wykryciu i wysłanie zlecenia do firmy dezynsekcyjnej.",
+          "initiator": "WK",
+          "responder": "WE",
+          "inputs": [
+            "Raport o wykryciu karaluchów"
+          ],
+          "outputs": [
+            "Potwierdzenie zlecenia"
+          ]
+        }
+      ],
+      "agent_model": [
+        {
+          "name": "WK Agent",
+          "aggregated_roles": [
+            "Wykrywanie karaluchów"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "PK Agent",
+          "aggregated_roles": [
+            "Przewidywanie karaluchów"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "IS Agent",
+          "aggregated_roles": [
+            "Informowanie o stanie"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "WE Agent",
+          "aggregated_roles": [
+            "Wezwanie ekipy dezynsekcyjnej"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "SIM Agent",
+          "aggregated_roles": [
+            "Symulacja środowiska"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "GUI Agent",
+          "aggregated_roles": [
+            "Prezentacja danych"
+          ],
+          "cardinality": ""
+        }
+      ],
+      "service_model": [
+        {
+          "name": "",
+          "provided_by": "",
+          "derived_from": "",
+          "inputs": [
+            ""
+          ],
+          "outputs": [
+            ""
+          ],
+          "pre_condition": "",
+          "post_condition": ""
+        }
+      ],
+      "acquaintance_model": [
+        {
+          "sender": "Agent SIM",
+          "receiver": "Agent PK",
+          "protocols": []
+        },
+        {
+          "sender": "Agent SIM",
+          "receiver": "Agent WK",
+          "protocols": []
+        },
+        {
+          "sender": "Agent PK",
+          "receiver": "Agent IS",
+          "protocols": []
+        },
+        {
+          "sender": "Agent WK",
+          "receiver": "Agent IS",
+          "protocols": []
+        },
+        {
+          "sender": "Agent WK",
+          "receiver": "Agent WE",
+          "protocols": []
+        },
+        {
+          "sender": "Agent IS",
+          "receiver": "Agent GUI",
+          "protocols": []
+        },
+        {
+          "sender": "Agent WE",
+          "receiver": "Agent GUI",
+          "protocols": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "3",
+    "title": "Opieka i nadzór nad zwierzętami",
+    "description": "Właściciele zwierząt domowych, ze szczególnym uwzględnieniem psów, na co dzień zmagają się z licznymi obowiązkami profilaktycznymi i opiekuńczymi, takimi jak szczepienia, odrobaczanie czy ochrona przeciwpasożytnicza. Wielość tych zadań sprawia, że opiekunowie często gubią się w harmonogramach. Poważnym wyzwaniem jest również trudność w prawidłowym rozpoznawaniu sygnałów świadczących o pogorszeniu samopoczucia lub chorobie pupila. Brak stałego monitoringu stanu i zachowania zwierzęcia, zwłaszcza podczas nieobecności właściciela w domu, prowadzi do niepokoju i opóźnień w reakcji na potencjalne zagrożenia zdrowotne. Ponadto trudności w interpretacji objawów skutkują skrajnymi postawami: bagatelizowaniem problemów z powodu braku świadomości lub nadmiernymi wizytami u weterynarza, co generuje nieuzasadnione koszty i niepotrzebnie obciąża kliniki weterynaryjne.",
+    "requirements": [
+      "Pomiar funkcji życiowych zwierzaka",
+      "Zapisywanie położenia zwierzaka",
+      "Kontrola zachowania zwierzaka",
+      "Monitorowanie stanu zdrowia",
+      "Przypominanie o wizytach u weterynarza",
+      "Umawianie wizyt u weterynarza"
+    ],
+    "gaia_artifacts": {
+      "roles": [
+        {
+          "name": "Sensor Simulator",
+          "description": "Generates realistic raw data like a sensor",
+          "activities": [
+            "GenerateData"
+          ],
+          "protocols": [
+            "SendCurrentData"
+          ],
+          "permissions": {
+            "read": [],
+            "write": [],
+            "produce": [
+              "RawSensorData"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "Sensor = (GenerateData.SendCurrentData)ω",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Data Aggregator",
+          "description": "Aggregates raw data from different sensors",
+          "activities": [
+            "AggregateData"
+          ],
+          "protocols": [
+            "ReceiveRawSensorsData",
+            "SendAggregatedData"
+          ],
+          "permissions": {
+            "read": [
+              "RawSensorsData"
+            ],
+            "write": [],
+            "produce": [
+              "AggregatedData"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "DataAggregator = ReceiveRawSensorsData*.AggregateData.SendAggregatedData",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Data Parser",
+          "description": "Parses aggregated data into a useful form",
+          "activities": [
+            "ParseData"
+          ],
+          "protocols": [
+            "ReceiveAggregatedData",
+            "SendParsedData"
+          ],
+          "permissions": {
+            "read": [
+              "AggregatedData"
+            ],
+            "write": [],
+            "produce": [
+              "ParsedData"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "DataParser = ReceiveAggregatedData.ParseData.SendParsedData",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Data Analyzer (LLM)",
+          "description": "Analyze parsed data to useful information",
+          "activities": [
+            "AnalyzeData"
+          ],
+          "protocols": [
+            "ReceiveParsedData",
+            "SendAnalysis"
+          ],
+          "permissions": {
+            "read": [
+              "ParsedData"
+            ],
+            "write": [],
+            "produce": [
+              "AnalyzedData"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "DataAnalyzer = ReceiveParsedData.AnalyzeData.SendAnalysis",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Master",
+          "description": "Coordinate workflow and take action based on the analyzed data",
+          "activities": [],
+          "protocols": [
+            "ReceiveParsedData",
+            "ReceiveAnalysis",
+            "ScheduleAppointmentRequest",
+            "GetCurrentAppointments"
+          ],
+          "permissions": {
+            "read": [
+              "ParsedData",
+              "AnalyzedData",
+              "CurrentAppointments"
+            ],
+            "write": [],
+            "produce": [],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "Master= (ReceiveParsedData . ReceiveAnalysis . GetCurrentAppointments) . (ScheduleAppointment | DoNothing)",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Appointment Planner",
+          "description": "Make an appointment at the vet when requested",
+          "activities": [
+            "PlanAppointment"
+          ],
+          "protocols": [
+            "ReceiveAppointmentRequest",
+            "ScheduledAppointmentResponse",
+            "GetCurrentAppointments",
+            "AddAppointment"
+          ],
+          "permissions": {
+            "read": [
+              "CurrentAppointments"
+            ],
+            "write": [],
+            "produce": [
+              "ScheduledAppointment"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "AppointmentPlanner = ReceiveAppointmentRequest . GetCurrentAppointments.PlanAppointment. ScheduledAppointmentResponse.AddAppointment",
+            "safety": [
+              "true"
+            ]
+          }
+        },
+        {
+          "name": "Calendar",
+          "description": "Stores all important events",
+          "activities": [],
+          "protocols": [
+            "SendUsersSchedule",
+            "AddAppointment"
+          ],
+          "permissions": {
+            "read": [],
+            "write": [
+              "Appointments"
+            ],
+            "produce": [
+              "CurrentAppointments"
+            ],
+            "consume": []
+          },
+          "responsibilities": {
+            "liveness": "Calendar = SendUsersSchedule",
+            "safety": [
+              "true"
+            ]
+          }
+        }
+      ],
+      "interactions": [
+        {
+          "goal": "Send raw data from one of the sensors",
+          "protocol_name": "SendCurrentData (Inform)",
+          "description": "Przesłanie surowych danych z symulatora czujników do agregatora danych.",
+          "initiator": "SensorSimulator",
+          "responder": "Data Aggregator",
+          "inputs": [],
+          "outputs": [
+            "sensorRawData"
+          ]
+        },
+        {
+          "goal": "Send aggregated data for processing",
+          "protocol_name": "SendAggregatedData (Inform)",
+          "description": "Przekazanie zagregowanych danych do parsera w celu ich dalszego przetworzenia.",
+          "initiator": "Data Aggregator",
+          "responder": "Data Parser",
+          "inputs": [
+            "sensorRawData"
+          ],
+          "outputs": [
+            "aggregatedData"
+          ]
+        },
+        {
+          "goal": "Send parsed data for analyzing",
+          "protocol_name": "SendParsedData (Inform)",
+          "description": "Przesłanie sparsowanych danych do analizatora opartego na LLM.",
+          "initiator": "Data Parser",
+          "responder": "Data Analyzer (LLM)",
+          "inputs": [
+            "aggregatedData"
+          ],
+          "outputs": [
+            "parsedData"
+          ]
+        },
+        {
+          "goal": "Send analysis for decision-making and action coordination.",
+          "protocol_name": "SendAnalysis (Inform)",
+          "description": "Przekazanie wyników analizy do modułu nadrzędnego (Master) w celu podjęcia decyzji.",
+          "initiator": "Data Analyzer (LLM)",
+          "responder": "Master",
+          "inputs": [
+            "parsedData"
+          ],
+          "outputs": [
+            "analysisDetails"
+          ]
+        },
+        {
+          "goal": "Send parsed data for statistics and direct review",
+          "protocol_name": "SendParsedData (Inform)",
+          "description": "Przesłanie sparsowanych danych bezpośrednio do modułu Master do celów statystycznych.",
+          "initiator": "Data Parser",
+          "responder": "Master",
+          "inputs": [],
+          "outputs": [
+            "parsedData"
+          ]
+        },
+        {
+          "goal": "Send appointment request for scheduling a vet visit",
+          "protocol_name": "ScheduleAppointmentRequest (request)",
+          "description": "Złożenie wniosku o zaplanowanie wizyty u weterynarza.",
+          "initiator": "Master",
+          "responder": "Appointment Planner",
+          "inputs": [
+            "parsedData",
+            "analysisDetails"
+          ],
+          "outputs": [
+            "bookingRequestDetails"
+          ]
+        },
+        {
+          "goal": "Send current schedule to check for existing appointments and aid decision-making",
+          "protocol_name": "SendUserSchedule (Inform)",
+          "description": "Przesłanie aktualnego harmonogramu z kalendarza do modułu Master.",
+          "initiator": "Calendar",
+          "responder": "Master",
+          "inputs": [],
+          "outputs": [
+            "calendarDetails"
+          ]
+        },
+        {
+          "goal": "Send current schedule to check for conflicts before booking.",
+          "protocol_name": "SendUserSchedule (Inform)",
+          "description": "Przekazanie kalendarza do planisty w celu weryfikacji dostępnych terminów.",
+          "initiator": "Calendar",
+          "responder": "Appointment Planner",
+          "inputs": [],
+          "outputs": [
+            "calendarDetails"
+          ]
+        },
+        {
+          "goal": "Send confirmation and details of the scheduled appointment.",
+          "protocol_name": "ScheduledAppointmentResponse (Inform)",
+          "description": "Potwierdzenie zaplanowania wizyty i przesłanie szczegółów do modułu Master.",
+          "initiator": "Appointment Planner",
+          "responder": "Master",
+          "inputs": [
+            "calendarDetails"
+          ],
+          "outputs": [
+            "appointmentDetails"
+          ]
+        }
+      ],
+      "agent_model": [
+        {
+          "name": "SensorAgent",
+          "aggregated_roles": [
+            "Sensor Simulator"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "SmartCollarAgent",
+          "aggregated_roles": [
+            "Data Aggregator",
+            "Data Parser"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "AnalyzerAgent",
+          "aggregated_roles": [
+            "Data Analyzer"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "MasterAgent",
+          "aggregated_roles": [
+            "Master",
+            "Appointment Planer"
+          ],
+          "cardinality": ""
+        },
+        {
+          "name": "CalendarAgent",
+          "aggregated_roles": [
+            "Calendar"
+          ],
+          "cardinality": ""
+        }
+      ],
+      "acquaintance_model": [
+        {
+          "sender": "MasterAgent",
+          "receiver": "CalendarAgent",
+          "protocols": []
+        },
+        {
+          "sender": "CalendarAgent",
+          "receiver": "MasterAgent",
+          "protocols": []
+        },
+        {
+          "sender": "AnalyzerAgent",
+          "receiver": "MasterAgent",
+          "protocols": []
+        },
+        {
+          "sender": "SmartCollarAgent",
+          "receiver": "MasterAgent",
+          "protocols": []
+        },
+        {
+          "sender": "SmartCollarAgent",
+          "receiver": "AnalyzerAgent",
+          "protocols": []
+        },
+        {
+          "sender": "SensorAgent",
+          "receiver": "SmartCollarAgent",
+          "protocols": []
+        }
+      ],
+      "service_model": [
+            {
+                "name": "",
+                "provided_by": "",
+                "derived_from": "",
+                "inputs": [
+                    ""
+                ],
+                "outputs": [
+                    ""
+                ],
+                "pre_condition": "",
+                "post_condition": ""
+            }
+        ]
+    }
+  }
+]

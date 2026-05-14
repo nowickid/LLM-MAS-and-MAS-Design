@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @tool
-def list_files(path = "", config: RunnableConfig = None):
+def list_files(path:str = "", config: RunnableConfig = None):
     """Returns a list of all files in the specified directory and its subdirectories,
     excluding files in ignored directories like node_modules, __pycache__ ..."""
     logger.info(f"      Listing files in path: '{path}'")
@@ -54,7 +54,7 @@ def write_to_file(filename: str, content: str, config: RunnableConfig = None):
     return f"Successfully wrote to file '{filename}'."
 
 @tool
-def read_file(filename, config: RunnableConfig = None):
+def read_file(filename: str, config: RunnableConfig = None):
     """Reads and returns the content of the specified file from the workspace directory."""
     logger.info(f"      Reading file: '{filename}'")
     configurable = config.get("metadata", {})

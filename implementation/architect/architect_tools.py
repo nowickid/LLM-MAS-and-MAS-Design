@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 sprint = 1
 
 @tool
-def update_readme(content, config: RunnableConfig = None):
+def update_readme(content: str, config: RunnableConfig = None):
     """
         Use this tool to update the README.md file with the provided content.
     """

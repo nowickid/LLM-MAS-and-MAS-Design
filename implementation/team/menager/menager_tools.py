@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @tool(args_schema=TaskStucture)
-def submit_task(task, context, system_message):
+def submit_task(task: str, context: str, system_message: str):
     """
     Submits a task to a worker with the given context and system message.
     """
@@ -14,7 +14,7 @@ def submit_task(task, context, system_message):
     return "Task submitted to worker"
 
 @tool(args_schema=ReportStructure)
-def submit_final_report(report):
+def submit_final_report(report: str):
     """
     Call this tool ONLY when the goal is FULLY achieved and you are 100% CERTAIN of the result.
     

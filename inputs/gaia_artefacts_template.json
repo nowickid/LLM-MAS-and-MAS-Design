@@ -1,0 +1,64 @@
+{
+    "gaia_artifacts": {
+        "roles": [
+            {
+                "name": "",
+                "description": "",
+                "activities": [],
+                "protocols": [],
+                "permissions": {
+                    "read": [],
+                    "write": [],
+                    "produce": [],
+                    "consume": []
+                },
+                "responsibilities": {
+                    "liveness": "",
+                    "safety": []
+                }
+            }
+        ],
+        "interactions": [
+            {
+                "goal": "",
+                "protocol_name": "",
+                "description": "",
+                "initiator": "",
+                "responder": "",
+                "inputs": [],
+                "outputs": []
+            }
+        ],
+        "agent_model": [
+            {
+                "name": "",
+                "aggregated_roles": [
+                    ""
+                ],
+                "cardinality": ""
+            }
+        ],
+        "service_model": [
+            {
+                "name": "",
+                "provided_by": "",
+                "derived_from": "",
+                "inputs": [
+                    ""
+                ],
+                "outputs": [
+                    ""
+                ],
+                "pre_condition": "",
+                "post_condition": ""
+            }
+        ],
+        "acquaintance_model": [
+            {
+                "sender": "",
+                "receiver": "",
+                "protocols":[]
+            }
+        ]
+    }
+}

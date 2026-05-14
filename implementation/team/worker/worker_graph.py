@@ -28,6 +28,7 @@ def prepare_input(state: WorkerState):
 - JUST CALL THE TOOLS.
 - If you deem the task fully completed, write a concise report on it
 - DO NOT write the report as a plain text message. Pass the content to the 'send_report' tool.
+- Absolute prohibition of using 'root' or 'sudo' commands. If you need elevated permissions, find an alternative solution.
                           """),
             HumanMessage(content=f"CONTEXT: {state['context']}\nTASK TO DO: {state['task']}, \n"),
         ],

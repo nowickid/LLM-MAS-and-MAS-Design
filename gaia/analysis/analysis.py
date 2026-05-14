@@ -1,7 +1,7 @@
 from state import State
 from langgraph.graph import StateGraph, START, END
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, RemoveMessage
-from gaia.analysis.analysis_structures import AnalizeState, AnalysisFeedback, DefineRoles, IdentifiedRoles, InteractionModel, OptimalizationFeedback, Prototypes
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, RemoveMessage, BaseMessage
+from gaia.analysis.analysis_structures import AnalizeState, AnalysisFeedback, DefineRoles, IdentifiedRoles, InteractionModel, OptimizationFeedback, Prototypes
 from gaia.analysis.analysis_prompts import  DEFAULT_ROLE_DEFS_PROMPT, DEFAULT_PROTOTYPES_PROMPT, DEFAULT_CRITIC_PROTOTYPES, DEFAULT_CRITIC_ROLE_DEFS_PROMPT
 from models import creator_llm, critic_llm, optimization_llm
 from typing import Literal
@@ -49,22 +49,34 @@ Zwróć zoptymalizowany prompt oraz krótkie wyjaśnienie: "Dlaczego ta zmiana z
     
     Feedback krytyka:\n{state['messages'][-1].content} \n
     """)
-    response: OptimalizationFeedback= optimization_llm.with_structured_output(OptimalizationFeedback).invoke([system] +[message])
+    response: OptimizationFeedback= optimization_llm.with_structured_output(OptimizationFeedback).invoke([system] +[message])
     print(f"Zoptymalizowany prompt dla {ANALYSIS_LAYER_NAME}-{phase}:\n\n {response.model_dump_json(indent=2)}\n\n")
     return {
         f"prompt_{phase}": response.new_system_prompt
     }
     
+def prepare_feedback_message(parsed: AnalysisFeedback) -> HumanMessage:
+    feedback_text = "Znaleziono następujące problemy:\n"
+    for issue in [i for i in parsed.issues if i.need_to_fix]:
+        feedback_text += f"- {issue.description}\n  Wskazówka: {issue.fix}\n"
+        
+    return HumanMessage(content=f"[FEEDBACK KRYTYKA]:\n{feedback_text}")
  
+def only_last_messages(messages: BaseMessage, n=2) -> list[BaseMessage]:
+    if len(messages) <= n:
+        return messages
+    
+    return messages[-n:]
+
 def call_define_prototypes(state: AnalizeState) -> dict:
     system = SystemMessage(content=state["prompt_prototypes"])
     structured_llm = creator_llm.with_structured_output(Prototypes, include_raw=True)
 
     response = structured_llm.invoke(
-        [system] + [state["requirements"]] + state["messages"]
+        [system] + [state["requirements"]] + only_last_messages(state["messages"])
     )
     tokens_counter.add(ANALYSIS_LAYER_NAME, "DefinePrototypes", response)
-
+    
     raw = response["raw"]
     parsed: Prototypes = response["parsed"]
 
@@ -99,7 +111,7 @@ def call_critic_prototypes(state: AnalizeState) -> dict:
     logger.info("%s\tKrytyk prototypów:\n%s", ANALYSIS_LAYER_NAME, parsed.model_dump_json(indent=2))
 
     msg = (
-        HumanMessage(content=f"[FEEDBACK KRYTYKA]:\n{parsed.message}")
+        prepare_feedback_message(parsed)
         if not parsed.is_complete
         else [RemoveMessage(id=m.id) for m in state["messages"]]
     )
@@ -131,7 +143,7 @@ def call_define_roles(state: AnalizeState) -> dict:
     response = structured_llm.invoke(
         [system] +
         [HumanMessage(content=f"{state["requirements"].content}\n\n Oto zidentyfikowane role:\n{state['identified_roles'].model_dump_json()} \n Oto model interakcji:\n{state['interaction_model'].model_dump_json()}")] +
-        state["messages"]
+        only_last_messages(state["messages"])
     )
     tokens_counter.add(ANALYSIS_LAYER_NAME, "DefineRoles", response)
 
@@ -164,7 +176,7 @@ def call_critic_roles(state: AnalizeState) -> dict:
     logger.info("Krytyk modelu ról:\n%s", parsed.model_dump_json(indent=2))
     
     msg = (
-        HumanMessage(content=f"[FEEDBACK KRYTYKA]:\n{parsed.message}") 
+        prepare_feedback_message(parsed) 
         if not parsed.is_complete 
         else [RemoveMessage(id=m.id) for m in state["messages"]]
     )
@@ -194,6 +206,7 @@ def prepare_analize_state(state: State) -> AnalizeState:
     description = state.get("description", "")
  
     func_block = "\n".join(f"  - {r}" for r in func_reqs) or "  (brak)"
+    print(f"Funkcjonalne wymagania:\n{func_block}")
  
     desc = (
         f"Opis systemu:\n{description if description else '  (brak)'}\n"
@@ -250,7 +263,7 @@ def process_analize(state: State, config: RunnableConfig = None) -> tuple[Define
     final_state: AnalizeState = graph.invoke(initial_state)
     if settings.use_prompt_optimization:
         logger.debug("\n\n\n PROMPTY: prototypy %s \n\n  role %s", final_state["prompt_prototypes"], final_state["prompt_role_defs"])
-    
+    print("Tokens used in ANALYSIS layer:\n", tokens_counter.summary())
     return {
         "roles": final_state.get("last_roles"),
         "interactions": final_state.get("interaction_model")

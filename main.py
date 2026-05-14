@@ -1,57 +1,84 @@
 from state import State
-from gaia.analysis.analysis import process_analize
-from gaia.design.design import process_design
 import logging
 from strategies.gaia_strategy import run_with_gaia
+from strategies.non_gaia_strategy import run_without_gaia
+from strategies.prepared_gaia_strategy import run_with_prepared_gaia
 from langchain_core.runnables import RunnableConfig
-   
+import json
+from tokens_stats import tokens_counter
+import os
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(message)s',
     datefmt='%H:%M:%S'
 )
-if __name__ == "__main__":
-    state = State(
-        
-        description=("""
-            Schroniska dla zwierząt mierzą się z wyzwaniem zapewnienia stałej, adekwatnej opieki
-            dużej liczby podopiecznych mając jednocześnie mocno ograniczone zasoby ludzkie jak i
-            finansowe. Ośrodki te realizują cykliczne, powtarzalne czynności, które bezpośrednio
-            wpływają na dobrostan zwierząt. Do wspomnianych czynności zaliczamy na przykład:● karmienie zwierząt● sprzątanie pomieszczeń● szczepienie zwierząt● wyprowadzanie zwierząt● przyjęcia zwierząt● adopcje zwierzątWyzwanie polega na jednoczesnym zapewnieniu wysokiej jakości opieki codziennej oraz
-            płynnym prowadzeniu przyjęć/adopcji, przy ograniczonej liczbie lub umiejętności opiekunów,
-            lub wolontariuszy, niestabilnej dostępności i wielu zależnościach.
-        """
-            
-        ),
-            functional_requirements = [
-        "Prowadzenie cyfrowej ewidencji zwierząt i śledzenie ich stanów zdrowia",
-        "Zarządzanie kontami, rolami oraz kompetencjami pracowników",
-        "Zgłaszanie i aktualizowanie slotów dostępności przez personel",
-        "Automatyczne generowanie cyklicznych zadań opieki (karmienie, spacery, szczepienia)",
-        "Automatyczny przydział zadań na podstawie kompetencji, preferencji i obciążenia",
-        "Monitorowanie pełnego cyklu życia zadania i potwierdzanie wykonania",
-        "Automatyczne planowanie kalendarza szczepień i generowanie zadań medycznych",
-        "Generowanie zadań sprzątania na podstawie bieżącego stanu pomieszczeń",
-        "Rejestracja nowych zwierząt wraz z badaniem wstępnym i harmonogramem opieki",
-        "Dynamiczna priorytetyzacja i rozróżnianie zadań krytycznych od rutynowych",
-        "Zapewnienie mechanizmu sprawiedliwej i równomiernej rotacji zadań",
-        "Natychmiastowa rekonfiguracja planu w przypadku nagłych zdarzeń i nieobecności",
-        "Kompleksowe wsparcie procesu adopcyjnego od wniosku do finalizacji"
-    ]
 
-    )
-    
-    config = RunnableConfig(
-     
-    {
+INPUTS_DIR = "inputs/requirements.json"
+
+def prepare_config_for_gaia(id, title):
+    return RunnableConfig({
         "configurable": 
         {
-            "workspace_dir": "./implementation_workspace",
-            "docs_dir": "./docs",
-            "documentation_pdf": "./test.pdf"
-        }
-    }
-    )
-    result = run_with_gaia(state, config=config)
+            "workspace_dir": f"evaluation/{id}/gaia/implementation_workspace",
+            "docs_dir": f"evaluation/{id}/gaia/docs",
+            "documentation_pdf": f"evaluation/{id}/gaia/{title}test.pdf"
+        }})
+def prepare_config_for_non_gaia(id, title):
+    return RunnableConfig({
+        "configurable": 
+        {
+            "workspace_dir": f"evaluation/{id}/non_gaia/implementation_workspace",
+            "docs_dir": f"evaluation/{id}/non_gaia/docs",
+        }})
+
+def prepare_config_for_prepared_gaia(id, title, gaia_artifacts):
+    return RunnableConfig({
+        "configurable": 
+        {
+            "workspace_dir": f"evaluation/{id}/prepared_gaia/implementation_workspace",
+            "docs_dir": f"evaluation/{id}/prepared_gaia/docs",
+            "documentation_pdf": f"evaluation/{id}/prepared_gaia/{title}test.pdf",
+            "gaia_artifacts": gaia_artifacts
+        }})
     
+def create_evaluation_directories(id):
+    os.makedirs(f"evaluation/{id}/gaia/implementation_workspace", exist_ok=True)
+    os.makedirs(f"evaluation/{id}/gaia/docs", exist_ok=True)
+    os.makedirs(f"evaluation/{id}/non_gaia/implementation_workspace", exist_ok=True)
+    os.makedirs(f"evaluation/{id}/non_gaia/docs", exist_ok=True)
+    os.makedirs(f"evaluation/{id}/prepared_gaia/implementation_workspace", exist_ok=True)
+    os.makedirs(f"evaluation/{id}/prepared_gaia/docs", exist_ok=True)
+    
+def save_tokens_stats(id, strategy):
+    tokens_counter.save(f"evaluation/{id}/{strategy}/tokens_stats.json")
+    tokens_counter.reset()
+    
+    
+
+if __name__ == "__main__":
+    exclude_ids = ["2", "3"] 
+    with open(INPUTS_DIR, "r") as f:
+        inputs = json.load(f)
+        
+    
+    for input in inputs:
+        if input["id"] in exclude_ids:
+            continue
+        create_evaluation_directories(input["id"])
+        state = State(
+            description=input["description"],
+            functional_requirements=input["requirements"]
+        )
+        config = prepare_config_for_gaia(input["id"], input["title"])
+        result = run_with_gaia(state, config=config)
+        save_tokens_stats(input["id"], "gaia")
+        
+        config = prepare_config_for_non_gaia(input["id"], input["title"])
+        result = run_without_gaia(state, config=config)
+        save_tokens_stats(input["id"], "non_gaia")
+        
+        config = prepare_config_for_prepared_gaia(input["id"], input["title"], input["gaia_artifacts"])
+        result = run_with_prepared_gaia(state, config=config)
+        save_tokens_stats(input["id"], "prepared_gaia")        
 

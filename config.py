@@ -5,16 +5,15 @@ class Settings(BaseSettings):
     # GAIA
     generate_pdf_reports: bool = True
     use_prompt_optimization: bool = False
-    analysis_prototypes_max_iterations: int = 0
-    analysis_roles_max_iterations: int = 0
-    design_services_max_iterations: int = 0
-    design_agents_max_iterations: int = 0
-    design_acquaintances_max_iterations: int = 0
+    analysis_prototypes_max_iterations: int =   4
+    analysis_roles_max_iterations: int =        4
+    design_services_max_iterations: int =       4
+    design_agents_max_iterations: int =         4
+    design_acquaintances_max_iterations: int =  4
     
     # IMPLEMENTATION
-    docs_dir: str = "docs"
     implementation_recursion_limit: int = 50
-    team_recursion_limit: int = 50
-    worker_recursion_limit: int = 50
+    team_recursion_limit: int = 150
+    worker_recursion_limit: int = 150
         
 settings = Settings()

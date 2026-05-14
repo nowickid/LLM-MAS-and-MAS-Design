@@ -53,9 +53,8 @@ class Service(BaseModel):
     outputs: List[str] = Field(description="Wyjścia - pochodna protokołów, np. ['creditRating']")
     pre_condition: str = Field(
         description=(
-            "Warunek wstępny jako wyrażenie logiczne, np. "
-            "'customer vetter available'. "
-            "Użyj 'true' jeśli brak warunków."
+            "Warunek końcowy. Jeśli usługa posiada 'outputs', określ ich stan końcowy "
+            "(np. 'X != null'). Użyj 'true' tylko jeśli usługa nie zmienia trwale stanu."
         )
     )
     post_condition: str = Field(
@@ -100,20 +99,36 @@ class AcquaintanceModel(BaseModel):
 # ---------------------------------------------------------------------------
 # FEEDBACK
 # ---------------------------------------------------------------------------
- 
+class Issue(BaseModel):
+    criterion: str = Field(description="Które kryterium GAIA zostało złamane (SŁOWNIE)")
+    description: str = Field(description="Szczegółowy opis tego, co jest źle")
+    fix: str = Field(description="Konkretna wskazówka jak to naprawić")
+    need_to_fix: bool = Field(
+        description="Czy ten problem musi być naprawiony, aby artefakt mógł być uznany za kompletny? (true/false)"
+    )                     
+
 class DesignFeedback(BaseModel):
+    issues: List[Issue] = Field(
+        default_factory=list,
+        description="Jeśli is_complete = false, dodaj tutaj każdy znaleziony błąd. Zostaw pustą listę, jeśli is_complete = true."
+    )
     is_complete: bool = Field(
-        description="Czy model jest kompletny i spójny z poprzednimi artefaktami?")
-    message: str = Field(
-        default="",
-        description="WYPEŁNIJ TYLKO JEŚLI is_complete=False. Szczegółowe braki i niezgodności.")
- 
- 
-class OptimalizationFeedback(BaseModel):
+        description="Czy artefakt jest kompletny i spełnia wymagania metodyki GAIA?"
+    )
+
+class OptimizationFeedback(BaseModel):
+    specific_issue: str = Field(
+        description="Krok 1: Zdefiniuj konkretny błąd w kontekście obecnego zadania (Co poszło nie tak?)."
+    )
+    abstract_rule: str = Field(
+        description="Krok 2: GENERALIZACJA. Przetłumacz `specific_issue` na uniwersalną zasadę. NIE UŻYWAJ słów kluczowych z obecnego zadania (np. zamiast 'psy/karaluchy' użyj 'aktorzy/obiekty domenowe')."
+    )
     new_system_prompt: str = Field(
-        description="Zoptymalizowany prompt do wygenerowania lepszego artefaktu.")
-    explenations: str = Field(
-        description="Wyjaśnienie, dlaczego ten prompt jest lepszy i jakie zmiany wprowadza.")
+        description="Krok 3: Zoptymalizowany, PEŁNY system prompt. Musi zawierać regułę wypracowaną w `abstract_rule`. Kategoryczny zakaz hardkodowania w nim rozwiązań specyficznych dla pojedynczego przypadku."
+    )
+    explanation: str = Field(
+        description="Krok 4: Wyjaśnienie mechanizmu. Dlaczego zaktualizowany prompt zapobiegnie całej KLASIE podobnych błędów, a nie tylko temu jednemu?"
+    )
    
    
 # ---------------------------------------------------------------------------
