@@ -14,7 +14,7 @@ class ImplementationState(TypedDict):
 
 class UpdateChangeLogStructure(BaseModel):
     changes: str = Field(..., description="A detailed changelog of all changes made during the sprint execution in markdown format.")
-    isProjectComplete: bool = Field(..., description="A boolean indicating whether the project is considered complete after the last sprint execution.")
+    isProjectComplete: bool = Field(..., description="A boolean indicating whether the project is considered complete after the last sprint execution. This should be set to true if the sprint's changes have fulfilled the overall project goals and no further development is needed, or false if additional sprints are expected to continue development.")
 
 class DelegateTaskStructure(BaseModel):
     sprint_goal: str = Field(..., description="The specific objective of this sprint/stage. It defines WHAT needs to be built in this phase.")

@@ -24,7 +24,7 @@ def prepare_config_for_gaia(id, title):
             "docs_dir": f"evaluation/{id}/gaia/docs",
             "documentation_pdf": f"evaluation/{id}/gaia/{title}test.pdf"
         }})
-def prepare_config_for_non_gaia(id, title):
+def prepare_config_for_non_gaia(id):
     return RunnableConfig({
         "configurable": 
         {
@@ -51,7 +51,10 @@ def create_evaluation_directories(id):
     os.makedirs(f"evaluation/{id}/prepared_gaia/docs", exist_ok=True)
     
 def save_tokens_stats(id, strategy):
-    tokens_counter.save(f"evaluation/{id}/{strategy}/tokens_stats.json")
+    json_path = f"evaluation/{id}/{strategy}/tokens_stats.json"
+    tokens_counter.save(json_path)
+    logging.info(f"Tokens stats for {strategy} strategy saved for input {id}.")
+    logging.info(tokens_counter)
     tokens_counter.reset()
     
     
@@ -72,9 +75,10 @@ if __name__ == "__main__":
         )
         config = prepare_config_for_gaia(input["id"], input["title"])
         result = run_with_gaia(state, config=config)
+        tokens_counter.add("main", "gaia_strategy", input_tokens=0, output_tokens=0, total_tokens=0, metadata={"model": "overall"})
         save_tokens_stats(input["id"], "gaia")
         
-        config = prepare_config_for_non_gaia(input["id"], input["title"])
+        config = prepare_config_for_non_gaia(input["id"])
         result = run_without_gaia(state, config=config)
         save_tokens_stats(input["id"], "non_gaia")
         

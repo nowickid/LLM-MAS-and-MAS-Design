@@ -35,9 +35,9 @@ def run_with_prepared_gaia(initial_state: State, config: RunnableConfig):
     
     g.add_edge(START, 'prepare_input')
     g.add_edge('prepare_input', 'documentation')
-    g.add_edge('documentation', END)
-    # g.add_edge('documentation', 'implementation')
-    # g.add_edge('implementation', END)
+    # g.add_edge('documentation', END)
+    g.add_edge('documentation', 'implementation')
+    g.add_edge('implementation', END)
     
     graph = g.compile()
     
